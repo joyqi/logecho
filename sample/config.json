@@ -1,0 +1,27 @@
+{
+    "blocks" : {
+        "post"      :   {
+            "source"    :   "/posts/",
+            "target"    :   "/posts/",
+            "recent"    :   10
+        },
+
+        "category"  :   {
+            "source"    :   {
+                "default"   :   "默认"
+            },
+            "template"  :   "archives.html",
+            "target"    :   "archives.html"
+        },
+
+        "tag"       :   {
+            "template"  :   "archives.html",
+            "target"    :   "archives.html"
+        },
+
+        "archive"   :  {
+            "template"  :   "archives.html",
+            "target"    :   "archives.html"
+        }
+    }
+}

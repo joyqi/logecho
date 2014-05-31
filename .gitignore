@@ -25,3 +25,4 @@ Vagrantfile
 config.rb
 config.codekit
 /logecho
+/sample/_target
