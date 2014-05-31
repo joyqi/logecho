@@ -1,0 +1,181 @@
+body {
+    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun", serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+a {
+    color: blue;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
+}
+h1, .h1 { font-size: 32px; }
+h2, .h2 { font-size: 28px; }
+h3, .h3 { font-size: 24px; }
+h4, .h4 { font-size: 18px; }
+h5, .h5 { font-size: 16px; }
+h6, .h6 { font-size: 14px; }
+
+
+/**
+ * layout
+ */
+.container {
+    margin: 0 auto;
+    max-width: 1140px;
+}
+
+.col-main,
+.col-secondary {
+    float: left;
+    padding: 15px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.col-main {
+    padding-left: 0;
+    border-left: 1px solid #eee;
+    width: 75%;
+}
+
+.col-secondary {
+    padding-right: 40px;
+    width: 25%;
+}
+
+
+/**
+ * navigation
+ */
+.site-header {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+.site-logo {
+    font-size: 64px;
+    background-color: #333;
+    color: #fff;
+    display: inline-block;
+    text-align: center;
+    line-height: 128px;
+    width: 128px;
+    height: 128px;
+    border-radius: 128px;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 5px #333;
+}
+.site-logo:hover {
+    text-decoration: none;
+}
+
+.site-name {
+    margin: 1em 0 -0.4em;
+}
+.site-name a {
+    color: #333;
+}
+.site-bio {
+    color: #999;
+}
+.site-nav {
+    padding: 0;
+    list-style: none;
+}
+.site-nav li {
+    margin: 10px 0;
+}
+
+.site-nav a {
+    display: inline-block;
+    padding: 2px 10px;
+    border: 3px solid #eee;
+    border-radius: 50px;
+}
+
+.site-nav a:hover {
+    border-color: blue;
+    text-decoration: none;
+}
+
+
+/**
+ * post
+ */
+.post {
+    padding: 20px 0 20px 40px;
+    border-bottom: 1px solid #eee;
+}
+.post__title {
+    margin-bottom: 5px;
+}
+.post__title a {
+    color: #333;
+}
+.post__title a:hover {
+}
+.post__meta {
+    color: #999;
+}
+.post__tag {
+    margin: 1em 0;
+}
+.post__tag ul {
+    display: inline;
+    padding: 0;
+}
+.post__tag li {
+    display: inline-block;
+    color: #999;
+}
+.post__tag li:after {
+    content: ",";
+}
+.post__tag li:last-child:after {
+    content: none;
+}
+
+/* page */
+.page {
+    border-bottom: none;
+}
+.hr-title {
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-width: 1px 0 0 0;
+}
+
+
+.btn-archive {
+    display: block;
+    padding: 40px 0 40px 40px;
+    text-align: center;
+    font-size: 18px;
+}
+
+.site-footer {
+    padding: 20px 0 20px 40px;
+    border-top: 1px solid #eee;
+    text-align: center;
+    font-style: italic;
+}
+
+
+/**
+ * clearfix
+ */
+.clearfix:before,
+.clearfix:after {
+    content: " "; // 1
+    display: table; // 2
+}
+.clearfix:after {
+    clear: both;
+}
