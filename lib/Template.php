@@ -105,6 +105,16 @@ class Template
         switch ($filter) {
             case 'date':
                 return date($arg ? 'Y-m-d' : $arg, $var);
+            case 'more':
+                if (strlen($arg) > 0) {
+                    $text = strip_tags($var);
+                    $more = mb_strlen($text) > $arg ? ' ...' : '';
+                    return '<p>' . mb_substr($text, 0, $arg) . $more . '</p>';
+                } else {
+                    $parts = preg_split("/<!--\s*more\s*-->/is", $var);
+                    $more = count($parts) > 1 ? '<p>...</p>' : '';
+                    return $parts[0] . $more;
+                }
             default:
                 break;
         }
@@ -233,7 +243,7 @@ class Template
             }
         }
 
-        info("> build {$template}=>{$target}");
+        info("> {$template} => {$target}");
         file_put_contents($target, $str);
     }
 

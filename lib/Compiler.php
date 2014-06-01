@@ -98,7 +98,7 @@ class Compiler
      */
     private function readMetas()
     {
-        info('build metas and index');
+        info('Read metas and index');
         // read metas from post
         foreach ($this->_config['blocks'] as $type => $block) {
             if (isset($block['source']) && is_string($block['source'])) {
@@ -479,7 +479,6 @@ class Compiler
         foreach ($this->_config['blocks'] as $type => $val) {
             if (isset($val['source']) && is_string($val['source'])
                 && isset($val['recent']) && isset($this->_index[$type])) {
-                $this->compilePost($type);
                 $posts = array_slice($this->_index[$type], 0, $val['recent']);
 
                 foreach ($posts as $post) {
@@ -494,6 +493,83 @@ class Compiler
     }
 
     /**
+     * @throws \Exception
+     */
+    private function generateFeeds()
+    {
+        if (!isset($this->_config['feeds'])) {
+            return;
+        }
+
+        $config = $this->_config['feeds'];
+
+        if (!isset($config['source']) || !isset($this->_index[$config['source']])) {
+            return;
+        }
+
+        $config = array_merge([
+            'title'         =>  isset($this->_data['title']) ? $this->_data['title'] : 'My Feeds',
+            'description'   =>  isset($this->_data['description']) ? $this->_data['description'] : 'My Feeds Description',
+            'recent'        =>  20,
+            'target'        =>  'feeds.xml',
+            'base'          =>  isset($this->_data['url']) ? $this->_data['url'] : '/'
+        ], $config);
+
+        $feedsUrl = rtrim($config['base'], '/') . '/' . ltrim($config['target'], '/');
+
+        $feeds = new \Atom();
+        $feeds->setBaseUrl($config['base']);
+        $feeds->setFeedUrl($feedsUrl);
+        $feeds->setTitle($config['title']);
+        $feeds->setSubTitle($config['description']);
+
+        $posts = array_slice($this->_index[$config['source']], 0, $config['recent']);
+        foreach ($posts as $post) {
+            $post = $this->getPost($config['source'], $post);
+            $item = [
+                'title'     =>  $post['title'],
+                'link'      =>  $post['url'],
+                'updated'   =>  $post['date'],
+                'published' =>  $post['date'],
+                'author'    =>  isset($config['author']) ? [
+                        'name'  =>  $config['author'],
+                        'url'   =>  $config['base']
+                        ] : NULL,
+                'content'   =>  $post['content']
+            ];
+
+            foreach ($this->_config['blocks'] as $type => $val) {
+                if (isset($val['source']) && is_string($val['source'])) {
+                    continue;
+                }
+
+                if (!empty($post[$type])) {
+                    foreach ($post[$type] as $meta) {
+                        $item['category'][] = [
+                            'feeds_url' =>  $meta['url'],
+                            'name'      =>  $meta['name']
+                        ];
+                    }
+                }
+            }
+
+            $feeds->addItem($item);
+        }
+
+        info('Generate feeds');
+        $target = $this->_dir . '_target/' . $config['target'];
+        $targetDir = dirname($target);
+
+        if (!is_dir($targetDir)) {
+            if (!mkdir($targetDir, 0755, true)) {
+                throw new \Exception('Feeds directory is not exists: ' . $targetDir);
+            }
+        }
+
+        file_put_contents($target, $feeds->generate());
+    }
+
+    /**
      * compile all files
      */
     public function compileAll()
@@ -501,8 +577,9 @@ class Compiler
         $this->compileIndex();
         $this->compileMetas();
         $this->compilePosts();
+        $this->generateFeeds();
 
-        echo "\033[32;1mFinish build all\033[37;0m\n";
+        echo "\033[32;1mFinish compile all\033[37;0m\n";
     }
 
     /**
@@ -528,6 +605,16 @@ class Compiler
             $this->compilePost($type, $context['next']['id']);
         }
 
-        echo "\033[32;1mFinish build {$type}:{$post}\033[37;0m\n";
+        $this->generateFeeds();
+
+        echo "\033[32;1mFinish compile {$type}:{$post}\033[37;0m\n";
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->_config;
     }
 }

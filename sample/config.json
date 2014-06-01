@@ -1,4 +1,10 @@
 {
+    "global" :   {
+        "title"         :   "My Logecho Site",
+        "description"   :   "Yet just another logecho site",
+        "url"           :   "http://logecho.com/"
+    },
+
     "blocks" : {
         "post"      :   {
             "source"    :   "/posts/",
@@ -23,5 +29,17 @@
             "template"  :   "archives.html",
             "target"    :   "archives.html"
         }
-    }
+    },
+
+    "feeds" :   {
+        "source"        :   "post",
+        "recent"        :   20,
+        "target"        :   "feeds.xml",
+        "base"          :   "http://logecho.com/",
+        "author"        :   "Logecho"
+    },
+
+    "build" :   [
+        "cp -f @THEME/style.css @TARGET/style.css"
+    ]
 }

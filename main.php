@@ -32,7 +32,7 @@ function info($str) {
 
 if (isset($options['h']) || isset($options['help'])) {
     echo 'LOGECHO ' . VERSION . '
-Copyright (c) 2013-' . date('Y') . ' Joyqi (http://70.io)
+Copyright (c) 2013-' . date('Y') . ' Logecho (http://logecho.com)
 usage: logecho [-s] [-d working-directory] [-p specific-post]
 ';
     exit;
@@ -53,11 +53,22 @@ if (!empty($options['p'])) {
 }
 
 try {
+    // run compiler
     $compiler = new \LE\Compiler($dir);
     if (preg_match("/^([_a-z0-9]+):(.+)$/i", $post, $matches)) {
         $compiler->compileSpecific($matches[1], $matches[2]);
     } else {
         $compiler->compileAll();
+    }
+
+    // run build command
+    $build = new \LE\Command($dir, $compiler->getConfig(), 'build');
+    $build->run();
+
+    // run sync command
+    if (isset($options['s']) || isset($options['sync'])) {
+        $sync = new \LE\Command($dir, $compiler->getConfig(), 'sync');
+        $sync->run();
     }
 } catch (Exception $e) {
     echo "\033[31;1m" . $e->getMessage() . "\033[37;0m\n";
