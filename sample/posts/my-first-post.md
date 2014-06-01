@@ -1,6 +1,6 @@
 @tag:php, redis, vim
 @category: default
-@date:2014-06-01
+@date:2014-05-31
 
 在ubuntu中用apt-get安装LEMP栈(linux+nginx+mysql+php)
 =============

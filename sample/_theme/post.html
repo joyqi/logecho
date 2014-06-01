@@ -2,23 +2,24 @@
 
     <div class="col-main" role="main">
         <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
-            <h1 class="post__title" itemprop="name headline"><a href="" itemtype="url">Lorem ipsum dolor sit amet consectetuer</a></h1>
+            <h1 class="post__title" itemprop="name headline"><a href="{{post.url}}" itemtype="url">{{post.title}}</a></h1>
             <div class="post__meta">
-                <time datetime="" itemprop="datePublished">December 25, 2013</time>
-                in <a href="">Develop</a>
+                <time datetime="" itemprop="datePublished">{{post.date@date:F j, Y}}</time>
+                in
+                <!-- LOOP post.category:category -->
+                <a href="{{category.url}}">{{category.name}}</a>
+                <!-- ENDLOOP -->
             </div>
             <hr class="hr-title">
             <div class="post__content" itemprop="articleBody">
-                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.</p>
-                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
-                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.</p>
+                {{post.content}}
             </div>
             <div class="post__tag">
                 Tag:
                 <ul>
-                    <li><a href="">php</a></li>
-                    <li><a href="">nginx</a></li>
-                    <li><a href="">javascript</a></li>
+                    <!-- LOOP post.tag:tag -->
+                    <a href="{{tag.url}}">{{tag.name}}</a>
+                    <!-- ENDLOOP -->
                 </ul>
             </div>
         </article>

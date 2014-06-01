@@ -104,7 +104,7 @@ class Template
     {
         switch ($filter) {
             case 'date':
-                return date($arg ? 'Y-m-d' : $arg, $var);
+                return date($arg ? $arg : 'Y-m-d', $var);
             case 'more':
                 if (strlen($arg) > 0) {
                     $text = strip_tags($var);

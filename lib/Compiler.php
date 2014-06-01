@@ -543,7 +543,7 @@ class Compiler
                     continue;
                 }
 
-                if (!empty($post[$type])) {
+                if ('archive' != $type && !empty($post[$type])) {
                     foreach ($post[$type] as $meta) {
                         $item['category'][] = [
                             'feeds_url' =>  $meta['url'],
