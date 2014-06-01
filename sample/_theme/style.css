@@ -1,5 +1,5 @@
 body {
-    font-family: Georgia, "Times New Roman", Times, "Songti SC", "SimSun", serif;
+    font-family: Georgia, "Times New Roman", Times, "STSong","NSimSun",serif;
     line-height: 1.6;
     color: #333;
 }
@@ -21,6 +21,19 @@ h3, .h3 { font-size: 24px; }
 h4, .h4 { font-size: 18px; }
 h5, .h5 { font-size: 16px; }
 h6, .h6 { font-size: 14px; }
+
+pre, code {
+    background: #F0F0F0;
+    font-family: Monaco, 'Courier New', Courier, monospace;
+}
+
+pre {
+    padding: 20px;
+}
+
+code {
+    padding: 0 5px;
+}
 
 
 /**

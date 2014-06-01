@@ -41,5 +41,9 @@
 
     "build" :   [
         "cp -f @THEME/style.css @TARGET/style.css"
+    ],
+
+    "sync"  :   [
+
     ]
 }

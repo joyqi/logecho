@@ -108,8 +108,8 @@ class Template
             case 'more':
                 if (strlen($arg) > 0) {
                     $text = strip_tags($var);
-                    $more = mb_strlen($text) > $arg ? ' ...' : '';
-                    return '<p>' . mb_substr($text, 0, $arg) . $more . '</p>';
+                    $more = mb_strlen($text, 'UTF-8') > $arg ? ' ...' : '';
+                    return '<p>' . mb_substr($text, 0, $arg, 'UTF-8') . $more . '</p>';
                 } else {
                     $parts = preg_split("/<!--\s*more\s*-->/is", $var);
                     $more = count($parts) > 1 ? '<p>...</p>' : '';
