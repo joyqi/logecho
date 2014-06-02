@@ -121,18 +121,43 @@ class Template
     }
 
     /**
-     * @param $var
-     * @param $filter
-     * @param $arg
+     * @param mixed $var
+     * @param string $str
      * @return string
      */
-    private function applyFilter($var, $filter, $arg)
+    private function applyFilter($var, $str)
     {
-        if (empty($filter)) {
+        if (empty($str)) {
             return $var;
         }
 
-        return '$' . "this->callFilter({$var}, '{$filter}', '{$arg}')";
+        $vars = [];
+        $str = trim($str, ' |');
+        $str = preg_replace_callback("/\"(.*?)\"/", function ($matches) use (&$vars) {
+            $key = '{' . uniqid() . '}';
+            $vars[$key] = $matches[1];
+            return $key;
+        }, $str);
+
+        $filters = array_filter(array_map('trim', explode('|', $str)));
+        foreach ($filters as $filter) {
+            $args = preg_split("/\s+/", $filter);
+            $func = array_shift($args);
+
+            foreach ($args as &$arg) {
+                if (isset($vars[$arg])) {
+                    $arg = $vars[$arg];
+                }
+            }
+
+            array_unshift($args, $var);
+            $func = 'le_filter_' . $func;
+            if (function_exists($func)) {
+                $var = call_user_func_array($func, $args);
+            }
+        }
+
+        return $var;
     }
 
     /**
@@ -196,12 +221,13 @@ class Template
      */
     private function parseVar()
     {
-        $this->_str = preg_replace_callback("/\{\{([_a-z0-9\.]+)(?:@([_a-z0-9]+)(?::([^\}]+))?)?\}\}/i", function ($matches) {
-            $var = $this->getVar($matches[1]);
-            $result = $this->applyFilter($var,
-                isset($matches[2]) ? $matches[2] : NULL,
-                isset($matches[3]) ? $matches[3] : NULL);
-            return "<?php if (isset({$var})): echo {$result}; endif; ?>";
+        $this->_str = preg_replace_callback("/\{\{\s*([_a-z0-9\.]+)(\s*\|\s*.+?)?\s*\}\}/is", function ($matches) {
+            $var = $filter = $this->getVar($matches[1]);
+            if (!empty($matches[2])) {
+                $filter = '$this->applyFilter(' . $var . ", '" . str_replace("'", "\\'", $matches[2]) . "')";
+            }
+
+            return "<?php if (isset({$var})): echo {$filter}; endif; ?>";
         }, $this->_str);
     }
 
@@ -214,6 +240,7 @@ class Template
     public function compile($template, $target, array $data)
     {
         $temp = sys_get_temp_dir() . '/' . md5($template . '&' . $target) . '.compile';
+        $this->_temp[] = $temp;
 
         if (!file_exists($temp)) {
             $this->_str = $this->getTemplate($template);
@@ -226,7 +253,6 @@ class Template
             str_replace(array_keys($this->_codes), array_values($this->_codes), $this->_str);
 
             file_put_contents($temp, $this->_str);
-            $this->_temp[] = $temp;
         }
 
         ob_start();

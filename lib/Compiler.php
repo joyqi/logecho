@@ -572,7 +572,7 @@ class Compiler
     /**
      * compile all files
      */
-    public function compileAll()
+    public function compile()
     {
         $this->compileIndex();
         $this->compileMetas();
@@ -580,34 +580,6 @@ class Compiler
         $this->generateFeeds();
 
         echo "\033[32;1mFinish compile all\033[37;0m\n";
-    }
-
-    /**
-     * compile specific post
-     *
-     * @param $type
-     * @param $post
-     */
-    public function compileSpecific($type, $post)
-    {
-        $this->compileIndex();
-        $this->compileMetas();
-        $this->compilePost($type, $post);
-
-        // rebuild context post
-        $context = $this->getPostContext($type, $post);
-
-        if (!empty($context['prev'])) {
-            $this->compilePost($type, $context['prev']['id']);
-        }
-
-        if (!empty($context['next'])) {
-            $this->compilePost($type, $context['next']['id']);
-        }
-
-        $this->generateFeeds();
-
-        echo "\033[32;1mFinish compile {$type}:{$post}\033[37;0m\n";
     }
 
     /**

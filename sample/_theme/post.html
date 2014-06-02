@@ -4,7 +4,7 @@
         <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
             <h1 class="post__title" itemprop="name headline"><a href="{{post.url}}" itemtype="url">{{post.title}}</a></h1>
             <div class="post__meta">
-                <time datetime="" itemprop="datePublished">{{post.date@date:F j, Y}}</time>
+                <time datetime="" itemprop="datePublished">{{post.date | date "F j, Y"}}</time>
                 in
                 <!-- LOOP post.category:category -->
                 <a href="{{category.url}}">{{category.name}}</a>
