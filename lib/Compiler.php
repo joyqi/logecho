@@ -80,14 +80,14 @@ class Compiler
      */
     private function readConfig()
     {
-        $file = $this->_dir . 'config.json';
+        $file = $this->_dir . 'config.yaml';
         if (!file_exists($file)) {
             throw new \Exception('Config file is not exists: ' . $file);
         }
 
-        $config = json_decode(file_get_contents($file), true);
+        $config = \Spyc::YAMLLoad($file);
         if (!$config) {
-            throw new \Exception('Config file is not a valid json file', json_last_error());
+            throw new \Exception('Config file is not a valid yaml file');
         }
 
         $this->_config = $config;

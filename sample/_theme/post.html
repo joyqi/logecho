@@ -5,15 +5,18 @@
             <h1 class="post__title" itemprop="name headline"><a href="{{post.url}}" itemtype="url">{{post.title}}</a></h1>
             <div class="post__meta">
                 <time datetime="" itemprop="datePublished">{{post.date | date "F j, Y"}}</time>
+                <!-- CASE post.category -->
                 in
                 <!-- LOOP post.category:category -->
                 <a href="{{category.url}}">{{category.name}}</a>
                 <!-- ENDLOOP -->
+                <!-- ENDCASE -->
             </div>
             <hr class="hr-title">
             <div class="post__content" itemprop="articleBody">
                 {{post.content}}
             </div>
+            <!-- CASE post.tag -->
             <div class="post__tag">
                 Tag:
                 <ul>
@@ -22,6 +25,7 @@
                     <!-- ENDLOOP -->
                 </ul>
             </div>
+            <!-- ENDCASE -->
         </article>
 
         <a href="" class="btn-archive">- Archives -</a>
