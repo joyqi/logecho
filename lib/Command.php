@@ -48,6 +48,7 @@ class Command
 
     /**
      * run all commands
+     * @throws \Exception
      */
     public function run()
     {
@@ -55,8 +56,12 @@ class Command
             $command = str_replace(array_keys($this->_pwd), array_values($this->_pwd), $command);
             echo "\033[34;1m{$command}\033[37;0m\n";
             echo "\033[33;1m";
-            passthru($command);
+            passthru($command, $return);
             echo "\033[37;0m";
+
+            if ($return) {
+                throw new \Exception('Command interrupted');
+            }
         }
     }
 }

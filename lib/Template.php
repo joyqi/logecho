@@ -213,6 +213,7 @@ class Template
                 return "<?php if (!empty({$var})): ?>";
             }, $this->_str);
 
+        $this->_str = preg_replace("/<!--\s*ELSECASE\s*-->/i", '<?php else: ?>', $this->_str);
         $this->_str = preg_replace("/<!--\s*ENDCASE\s*-->/i", '<?php endif; ?>', $this->_str);
     }
 

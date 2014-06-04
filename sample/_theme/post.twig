@@ -1,36 +1,36 @@
-<!-- INCLUDE header.html -->
+{% include "header.twig" %}
 
     <div class="col-main" role="main">
         <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
             <h1 class="post__title" itemprop="name headline"><a href="{{post.url}}" itemtype="url">{{post.title}}</a></h1>
             <div class="post__meta">
-                <time datetime="" itemprop="datePublished">{{post.date | date "F j, Y"}}</time>
-                <!-- CASE post.category -->
+                <time datetime="" itemprop="datePublished">{{post.date | date("F j, Y") }}</time>
+                {% if post.category is not empty %}
                 in
-                <!-- LOOP post.category:category -->
+                {% for category in post.category %}
                 <a href="{{category.url}}">{{category.name}}</a>
-                <!-- ENDLOOP -->
-                <!-- ENDCASE -->
+                {% endfor %}
+                {% endif %}
             </div>
             <hr class="hr-title">
             <div class="post__content" itemprop="articleBody">
                 {{post.content}}
             </div>
-            <!-- CASE post.tag -->
+            {% if post.tag is not empty %}
             <div class="post__tag">
                 Tag:
                 <ul>
-                    <!-- LOOP post.tag:tag -->
+                    {% for tag in post.tag %}
                     <a href="{{tag.url}}">{{tag.name}}</a>
-                    <!-- ENDLOOP -->
+                    {% endfor %}
                 </ul>
             </div>
-            <!-- ENDCASE -->
+            {% endif %}
         </article>
 
         <a href="" class="btn-archive">- Archives -</a>
 
-        <!-- INCLUDE footer.html -->
+        {% include "footer.twig" %}
     </div><!-- /.layout-main -->
 </div><!-- /.container -->
 

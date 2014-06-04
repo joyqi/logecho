@@ -1,18 +1,18 @@
-<!-- INCLUDE header.html -->
+{% include "header.twig" %}
 
     <div class="col-main" role="main">
         <article class="post page" itemscope itemtype="http://schema.org/BlogPosting">
             <h1 class="post__title" itemprop="name headline"><a href="" itemtype="url">Archives</a></h1>
             <hr class="hr-title">
             <div class="post__content" itemprop="articleBody">
-                <!-- LOOP archive:item -->
+                {% for item in archive %}
                 <h2 class="h4" id="archive-{{item.slug}}">{{item.name}}</h2>
                 <ul>
-                    <!-- LOOP item.posts:post -->
+                    {% for post in item.posts %}
                     <li><a href="{{post.url}}">{{post.title}}</a></li>
-                    <!-- ENDLOOP -->
+                    {% endfor %}
                 </ul>
-                <!-- ENDLOOP -->
+                {% endfor %}
             </div>
         </article>
 
@@ -20,33 +20,32 @@
             <h1 class="post__title" itemprop="name headline"><a href="" itemtype="url">Categories</a></h1>
             <hr class="hr-title">
             <div class="post__content" itemprop="articleBody">
-                <!-- LOOP category:item -->
+                {% for item in category %}
                 <h2 class="h4" id="category-{{item.slug}}">{{item.name}}</h2>
                 <ul>
-                    <!-- LOOP item.posts:post -->
+                    {% for post in item.posts %}
                     <li><a href="{{post.url}}">{{post.title}}</a></li>
-                    <!-- ENDLOOP -->
+                    {% endfor %}
                 </ul>
-                <!-- ENDLOOP -->
+                {% endfor %}
             </div>
         </article>
-
         <article class="post page" itemscope itemtype="http://schema.org/BlogPosting">
             <h1 class="post__title" itemprop="name headline"><a href="" itemtype="url">Tags</a></h1>
             <hr class="hr-title">
             <div class="post__content" itemprop="articleBody">
-                <!-- LOOP tag:item -->
+                {% for item in tag %}
                 <h2 class="h4" id="tag-{{item.slug}}">{{item.name}}</h2>
                 <ul>
-                    <!-- LOOP item.posts:post -->
+                    {% for post in item.posts %}
                     <li><a href="{{post.url}}">{{post.title}}</a></li>
-                    <!-- ENDLOOP -->
+                    {% endfor %}
                 </ul>
-                <!-- ENDLOOP -->
+                {% endfor %}
             </div>
         </article>
 
-    <!-- INCLUDE footer.html -->
+        {% include "footer.twig" %}
     </div><!-- /.layout-main -->
 </div><!-- /.container -->
 

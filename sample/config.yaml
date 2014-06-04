@@ -1,28 +1,34 @@
+# You can configure this file to customize your site
 global:
+    # Definition of global variable
     title : My Blog Site
     description : Yet another logecho site
     url : http://logecho.com/
 blocks:
+    # All blocks to compile
     post:
         source  : /posts/
         target  : /posts/
         recent  : 10
     category:
         source  :
-            default : 默认分类
-        template  : archives.html
+            default : Default
+        template  : archives.twig
         target    : archives.html
     tag:
-        template  : archives.html
+        template  : archives.twig
         target    : archives.html
     archive:
-        template  : archives.html
+        template  : archives.twig
         target    : archives.html
 feeds:
+    # Definition of feeds gererating
     source  : post
     recent  : 20
     target  : feeds.xml
-    base    : http://logecho.com/
     author  : Logecho
 build:
+    # The commands running after compile
     - cp -f @THEME/style.css @TARGET/style.css
+sync:
+    # The commands running with sync operation

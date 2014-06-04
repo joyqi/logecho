@@ -34,7 +34,7 @@ class Compiler
     private $_parser;
 
     /**
-     * @var Template
+     * @var \Twig_Environment
      */
     private $_template;
 
@@ -63,16 +63,30 @@ class Compiler
      */
     public function __construct($dir)
     {
+        global $twig;
+
         if (!is_dir($dir)) {
             throw new \Exception('Directory is not exists: ' . $dir);
         }
 
         $this->_parser = new \MarkdownExtraExtended();
         $this->_dir = $dir . '/';
+
+        $loader = new \Twig_Loader_Filesystem($this->_dir . '_theme');
+        $this->_template = new \Twig_Environment($loader, [
+            'autoescape'    =>  false
+        ]);
+        $twig = $this->_template;
+
+        if (file_exists($dir . '/filters.php')) {
+            require_once $dir . '/filters.php';
+        }
+
+        require_once 'phar://logecho.phar/filters.php';
+
         $this->readConfig();
         $this->readMetas();
         $this->readGlobals();
-        $this->_template = new Template($this->_dir . '_theme', $this->_dir . '_target');
     }
 
     /**
@@ -128,6 +142,23 @@ class Compiler
             arsort($index);
             return array_keys($index);
         }, $this->_index);
+
+        if (!empty($this->_metas['archive'])) {
+            krsort($this->_metas['archive']);
+        }
+
+        foreach ($this->_metas as $type => $relates) {
+            foreach ($relates as $key => $relate) {
+                usort($relate, function ($a, $b) {
+                    $x = array_search($a[1], $this->_index[$a[0]]);
+                    $y = array_search($b[1], $this->_index[$b[0]]);
+
+                    return $x > $y ? 1 : -1;
+                });
+
+                $this->_metas[$type][$key] = $relate;
+            }
+        }
     }
 
     /**
@@ -170,6 +201,10 @@ class Compiler
                     ];
                 }
             }
+        }
+
+        foreach ($this->_data as $key => $val) {
+            $this->_template->addGlobal($key, $val);
         }
     }
 
@@ -273,7 +308,7 @@ class Compiler
             . '/' . urlencode($result['slug']) . '.' . $result['ext'];
 
         $dom = new \DOMDocument();
-        $dom->loadHTML('<?xml encoding="UTF-8">' .
+        @$dom->loadHTML('<?xml encoding="UTF-8">' .
             '<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head><body>'
             . $result['content'] . '</body></html>');
         $xpath = new \DOMXPath($dom);
@@ -340,16 +375,10 @@ class Compiler
         }
 
         usort($result, function ($a, $b) {
-            $indexA = array_search($a['id'], $this->_index[$a['type']]);
-            $indexB = array_search($b['id'], $this->_index[$b['type']]);
+            $x = array_search($a['id'], $this->_index[$a['type']]);
+            $y = array_search($b['id'], $this->_index[$b['type']]);
 
-            if ($indexA > $indexB) {
-                return -1;
-            } else if ($indexA < $indexB) {
-                return 1;
-            } else {
-                return 0;
-            }
+            return $x > $y ? 1 : -1;
         });
 
         return $result;
@@ -363,8 +392,18 @@ class Compiler
      */
     private function build($template, $file, array $data = [])
     {
-        $data = array_merge($this->_data, $data);
-        $this->_template->compile($template, $file, $data);
+        $html = $this->_template->render($template, $data);
+
+        $file = $this->_dir . '/_target/' . $file;
+        $dir = dirname($file);
+
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 0755, true)) {
+                throw new \Exception('Target directory is not exists: ' . $dir);
+            }
+        }
+
+        file_put_contents($file, $html);
     }
 
     /**
@@ -381,7 +420,7 @@ class Compiler
         }
 
         $files = glob($this->_dir . $block['source'] . '/*.md');
-        $template = $type. '.html';
+        $template = $type. '.twig';
         $target = $block['target'] . '/';
 
         if (isset($block['template'])) {
@@ -430,7 +469,7 @@ class Compiler
             }
 
             $target = isset($val['target']) ? $val['target']  : $type . '.html';
-            $template = isset($val['template']) ? $val['template'] : $type . '.html';
+            $template = isset($val['template']) ? $val['template'] : $type . '.twig';
 
             if ('/' == substr($target, -1)) {
                 if (!empty($this->_data['metas'][$type])) {
@@ -487,7 +526,7 @@ class Compiler
             }
         }
 
-        $this->build('index.html', 'index.html', [
+        $this->build('index.twig', 'index.html', [
             'recent'    =>  $recent
         ]);
     }
