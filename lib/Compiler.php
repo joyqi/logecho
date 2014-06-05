@@ -78,11 +78,11 @@ class Compiler
         ]);
         $twig = $this->_template;
 
-        if (file_exists($dir . '/filters.php')) {
-            require_once $dir . '/filters.php';
+        if (file_exists($dir . '/functions.php')) {
+            require_once $dir . '/functions.php';
         }
 
-        require_once 'phar://logecho.phar/filters.php';
+        require_once 'phar://logecho.phar/functions.php';
 
         $this->readConfig();
         $this->readMetas();
@@ -392,6 +392,7 @@ class Compiler
      */
     private function build($template, $file, array $data = [])
     {
+        info("+ {$file}");
         $html = $this->_template->render($template, $data);
 
         $file = $this->_dir . '/_target/' . $file;
