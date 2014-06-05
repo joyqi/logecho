@@ -599,7 +599,7 @@ class Compiler
             $post = $this->getPost($config['source'], $post);
             $item = [
                 'title'     =>  $post['title'],
-                'link'      =>  $post['url'],
+                'link'      =>  rtrim($config['base'], '/') . $post['url'],
                 'updated'   =>  $post['date'],
                 'published' =>  $post['date'],
                 'author'    =>  isset($config['author']) ? [
