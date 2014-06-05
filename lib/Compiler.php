@@ -299,6 +299,7 @@ class Compiler
 
         $result['type'] = $type;
         $result['id'] = $result['title'] = $key;
+        $result['text'] = $text;
         $result['content'] = $this->_parser->transform($text);
         $result['ext'] = isset($block['ext']) ? $block['ext'] : 'html';
         if (!isset($result['slug'])) {
@@ -370,16 +371,18 @@ class Compiler
                     unset($this->_cached[$index]['content']);
                 }
 
-                $result[] = $this->_cached[$index];
+                $result[$postType][] = $this->_cached[$index];
             }
         }
 
-        usort($result, function ($a, $b) {
-            $x = array_search($a['id'], $this->_index[$a['type']]);
-            $y = array_search($b['id'], $this->_index[$b['type']]);
+        foreach ($result as &$archive) {
+            usort($archive, function ($a, $b) {
+                $x = array_search($a['id'], $this->_index[$a['type']]);
+                $y = array_search($b['id'], $this->_index[$b['type']]);
 
-            return $x > $y ? 1 : -1;
-        });
+                return $x > $y ? 1 : -1;
+            });
+        }
 
         return $result;
     }
@@ -498,8 +501,7 @@ class Compiler
                 } else {
                     if (!empty($this->_data['metas'][$type])) {
                         foreach ($this->_data['metas'][$type] as $key => $val) {
-                            $val['posts'] = $this->getMetaPosts($type, $key);
-                            $data[$type][$key] = $val;
+                            $data[$type][$key] = array_merge($val, $this->getMetaPosts($type, $key));
                         }
                     }
                 }
