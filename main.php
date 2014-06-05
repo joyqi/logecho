@@ -125,7 +125,7 @@ switch ($argv[0]) {
     default:
         echo 'LOGECHO ' . VERSION . '
 Copyright (c) 2013-' . date('Y') . ' Logecho (http://logecho.com)
-usage: logecho (build|sync|serve|help|update|import) [your-working-directory]
+usage: logecho (init|build|sync|serve|help|update|import) [your-working-directory]
 ';
         break;
 }
