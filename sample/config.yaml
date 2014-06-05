@@ -9,7 +9,6 @@ blocks:
     post:
         source  : /posts/
         target  : /posts/
-        recent  : 10
     category:
         source  :
             default : Default
@@ -21,6 +20,10 @@ blocks:
     archive:
         template  : archives.twig
         target    : archives.html
+    index:
+        template  : index.twig
+        target    : index.html
+        limit     : 10
 feeds:
     # Definition of feeds gererating
     source  : post

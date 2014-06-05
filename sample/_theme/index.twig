@@ -1,8 +1,7 @@
 {% include "header.twig" %}
 
     <div class="col-main" role="main">
-        <!-- LOOP recent.post:post -->
-        {% for post in recent.post %}
+        {% for post in index.post %}
         <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
             <h1 class="post__title h3" itemprop="name headline"><a href="{{post.url}}" itemtype="url">{{post.title}}</a></h1>
             <div class="post__meta">
@@ -14,7 +13,6 @@
             </div>
         </article>
         {% endfor %}
-        <!-- ENDLOOP -->
 
         <a href="/archives.html" class="btn-archive">- Archives -</a>
 

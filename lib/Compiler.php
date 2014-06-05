@@ -268,6 +268,7 @@ class Compiler
         if (!isset($metas['archive']) && isset($this->_config['blocks']['archive'])) {
             $metas['archive'][] = date('Y.m', $metas['date']);
         }
+
         $str = implode("\n", array_slice($lines, $index));
         return $metas;
     }
@@ -516,21 +517,40 @@ class Compiler
      */
     private function compileIndex()
     {
-        $recent = [];
+        $index = [];
+
+        if (!isset($this->_config['blocks']['index'])) {
+            return;
+        }
+
+        $config = $this->_config['blocks']['index'];
+        $template = isset($config['template']) ? $config['template'] : 'index.twig';
+        $target = isset($config['target']) ? $config['target'] : 'index.html';
+        $limit = isset($config['limit']) ? $config['limit'] : 10;
 
         foreach ($this->_config['blocks'] as $type => $val) {
             if (isset($val['source']) && is_string($val['source'])
-                && isset($val['recent']) && isset($this->_index[$type])) {
-                $posts = array_slice($this->_index[$type], 0, $val['recent']);
+                && isset($this->_index[$type])) {
+                if (is_array($limit)) {
+                    $currentLimit = isset($limit[$type]) ? $limit[$type] : 0;
+                } else {
+                    $currentLimit = $limit;
+                }
+
+                if (0 == $currentLimit) {
+                    continue;
+                }
+
+                $posts = array_slice($this->_index[$type], 0, $currentLimit);
 
                 foreach ($posts as $post) {
-                    $recent[$type][] = $this->getPost($type, $post);
+                    $index[$type][] = $this->getPost($type, $post);
                 }
             }
         }
 
-        $this->build('index.twig', 'index.html', [
-            'recent'    =>  $recent
+        $this->build($template, $target, [
+            'index'    =>  $index
         ]);
     }
 
