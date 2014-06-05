@@ -26,6 +26,11 @@ class Compiler
     /**
      * @var array
      */
+    private $_indexConfig = [];
+
+    /**
+     * @var array
+     */
     private $_metas = [];
 
     /**
@@ -104,6 +109,10 @@ class Compiler
             throw new \Exception('Config file is not a valid yaml file');
         }
 
+        if (isset($config['blocks']['index'])) {
+            $this->_indexConfig = $config['blocks']['index'];
+            unset($config['blocks']['index']);
+        }
         $this->_config = $config;
     }
 
@@ -519,11 +528,11 @@ class Compiler
     {
         $index = [];
 
-        if (!isset($this->_config['blocks']['index'])) {
+        if (empty($this->_indexConfig)) {
             return;
         }
 
-        $config = $this->_config['blocks']['index'];
+        $config = $this->_indexConfig;
         $template = isset($config['template']) ? $config['template'] : 'index.twig';
         $target = isset($config['target']) ? $config['target'] : 'index.html';
         $limit = isset($config['limit']) ? $config['limit'] : 10;
