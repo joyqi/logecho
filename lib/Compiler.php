@@ -166,8 +166,8 @@ class Compiler
      */
     private function readGlobals()
     {
-        if (isset($this->_config['global'])) {
-            $this->_data = $this->_config['global'];
+        if (isset($this->_config['globals'])) {
+            $this->_data = $this->_config['globals'];
         }
 
         $this->_data['metas'] = [];

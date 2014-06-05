@@ -1,5 +1,5 @@
 # You can configure this file to customize your site
-global:
+globals:
     # Definition of global variable
     title : My Blog Site
     description : Yet another logecho site
