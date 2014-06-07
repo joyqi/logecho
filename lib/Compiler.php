@@ -308,7 +308,8 @@ class Compiler
         }
 
         $result['type'] = $type;
-        $result['id'] = $result['title'] = $key;
+        $result['id'] = $type . ':' . $key;
+        $result['title'] = $key;
         $result['text'] = $text;
         $result['content'] = $this->_parser->transform($text);
         $result['ext'] = isset($block['ext']) ? $block['ext'] : 'html';

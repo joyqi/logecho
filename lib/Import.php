@@ -22,15 +22,35 @@ class Import
      */
     public function __construct($url, $dir)
     {
+        if (!file_exists($dir . '/config.yaml')) {
+            throw new \Exception('Config file is not exists: ' . $dir . '/config.yaml');
+        }
+
+        $config = \Spyc::YAMLLoadString(file_get_contents($dir . '/config.yaml'));
+        if (!isset($config['blocks']['post'])) {
+            throw new \Exception('You must define a block named "post" in config.yaml');
+        }
+
         $xmlrpcUrl = $this->detectXmlrpcUrl($url);
         $xmlrpc = new \XMLRPC($xmlrpcUrl);
         $methods = $xmlrpc->system->listMethods();
 
+        $wxrFile = tempnam(sys_get_temp_dir(), 'le');
+        $wxr = fopen($wxrFile, 'wb');
+
+        // write begin
+        fwrite($wxr, '<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dsq="http://www.disqus.com/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:wp="http://wordpress.org/export/1.0/"
+>
+  <channel>');
+
         $username = get_input('Username:');
         $password = get_input('Password:');
         info("Login to {$url} with {$username}:{$password}");
-
-        $config = \Spyc::YAMLLoadString(file_get_contents('phar://logecho.phar/sample/config.yaml'));
 
         $blogId = 1;
         if (in_array('metaWeblog.getUsersBlogs', $methods)) {
@@ -46,8 +66,8 @@ class Import
 
         if (in_array('wp.getOptions', $methods)) {
             $options = $xmlrpc->wp->getOptions($blogId, $username, $password);
-            $config['global']['url'] = $options['blog_url']['value'];
-            $config['global']['title'] = $options['blog_title']['value'];
+            $config['globals']['url'] = $options['blog_url']['value'];
+            $config['globals']['title'] = $options['blog_title']['value'];
         }
 
         $config['blocks']['category']['source'] = [];
@@ -70,6 +90,9 @@ class Import
             info('Fetching posts');
             $posts = $xmlrpc->metaWeblog->getRecentPosts($blogId, $username, $password, 1000);
             $source = $dir . '/' . $config['blocks']['post']['source'];
+            $target = rtrim($config['globals']['url'], '/') . '/'
+                . trim(isset($config['blocks']['post']['target']) ? $config['blocks']['post']['target'] : 'post', '/')
+                . '/%s.' . (isset($config['blocks']['post']['ext']) ? $config['blocks']['post']['ext'] : 'html');
 
             if (!is_dir($source)) {
                 if (!mkdir($source, 0755, true)) {
@@ -85,7 +108,54 @@ class Import
                 info('Add ' . $post['wp_slug']);
                 $content = $this->filterPost($post, $config['blocks']['category']['source']);
                 file_put_contents($source . '/' . $post['wp_slug'] . '.md', $content);
+
+                if (in_array('wp.getComments', $methods)) {
+                    $offset = 0;
+                    info('Fetching comments: ' . $post['postid']);
+
+                    do {
+                        $comments = $xmlrpc->wp->getComments($blogId, $username, $password, [
+                            'post_id'   =>  $post['postid'],
+                            'number'    =>  100,
+                            'offset'    =>  $offset
+                        ]);
+
+                        foreach ($comments as $c) {
+                            if (isset($c['type']) && 'comment' != $c['type']) {
+                                continue;
+                            }
+
+                            fwrite($wxr, "<item>
+    <title>{$post['title']}</title>
+    <link>" . sprintf($target, $post['wp_slug']) . "</link>
+    <dsq:thread_identifier>post:{$post['wp_slug']}</dsq:thread_identifier>
+    <wp:post_date_gmt>" . date('Y-m-d H:i:s', $post['dateCreated']->getTimestamp()) . "</wp:post_date_gmt>
+    <wp:comment_status>open</wp:comment_status>
+    <wp:comment>
+        <wp:comment_id>{$c['comment_id']}</wp:comment_id>
+        <wp:comment_author>{$c['author']}</wp:comment_author>
+        <wp:comment_author_email>{$c['author_email']}</wp:comment_author_email>
+        <wp:comment_author_url>{$c['author_url']}</wp:comment_author_url>
+        <wp:comment_author_IP>{$c['author_ip']}</wp:comment_author_IP>
+        <wp:comment_date_gmt>" . date('Y-m-d H:i:s', $c['date_created_gmt']->getTimestamp()) . "</wp:comment_date_gmt>
+        <wp:comment_content><![CDATA[{$c['content']}]]></wp:comment_content>
+        <wp:comment_approved>" . ('approve' == $c['status'] ? 1 : 0) . "</wp:comment_approved>
+        <wp:comment_parent>{$c['parent']}</wp:comment_parent>
+    </wp:comment>
+    </item>");
+                        }
+
+                        $offset += 100;
+                    } while (count($comments) == 100);
+                }
             }
+        }
+
+        fwrite($wxr, '</channel>
+</rss>');
+        fclose($wxr);
+        if (rename($wxrFile, $dir . '/wxr.xml')) {
+            info("Your comments WXR XML file has exported to {$dir}/wxr.xml");
         }
     }
 
@@ -97,7 +167,7 @@ class Import
     private function filterPost(array $post, array $categoriesConfig)
     {
         $text = (isset($post['description']) ? $post['description'] : '')
-            . (isset($post['mt_text_more']) ? $post['mt_text_more'] : '');
+            . (isset($post['mt_text_more']) ? "\n\n<!--more-->\n\n" . $post['mt_text_more'] : '');
 
         $text = preg_replace("/<\/p>\s*<\/p>/is", "</p>", $text);
         $text = preg_replace_callback("/<pre[^>]*><code[^>]*>(.+?)<\/code><\/pre>/is", function ($matches) {
