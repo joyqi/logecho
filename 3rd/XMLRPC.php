@@ -539,24 +539,68 @@ class IXR_Message {
     function IXR_Message ($message) {
         $this->message = $message;
     }
+
+    function traversal(DOMNode $node)
+    {
+        if (XML_ELEMENT_NODE == $node->nodeType) {
+            $this->tag_open(NULL, $node->tagName, NULL);
+        }
+
+        if (XML_TEXT_NODE == $node->nodeType) {
+            $this->cdata(NULL, $node->nodeValue);
+        }
+
+        if ($node->hasChildNodes()) {
+            foreach ($node->childNodes as $child) {
+                $this->traversal($child);
+            }
+        }
+
+        if (XML_ELEMENT_NODE == $node->nodeType) {
+            $this->tag_close(NULL, $node->tagName);
+        }
+    }
+
     function parse() {
         // first remove the XML declaration
         $this->message = preg_replace('/<\?xml(.*)?\?'.'>/', '', $this->message);
         if (trim($this->message) == '') {
             return false;
         }
-        $this->_parser = xml_parser_create();
+
+        //reject overly long 2 byte sequences, as well as characters above U+10000 and replace with ?
+        $this->message = preg_replace('/[\x00-\x08\x10\x0B\x0C\x0E-\x19\x7F]'.
+            '|[\x00-\x7F][\x80-\xBF]+'.
+            '|([\xC0\xC1]|[\xF0-\xFF])[\x80-\xBF]*'.
+            '|[\xC2-\xDF]((?![\x80-\xBF])|[\x80-\xBF]{2,})'.
+            '|[\xE0-\xEF](([\x80-\xBF](?![\x80-\xBF]))|(?![\x80-\xBF]{2})|[\x80-\xBF]{3,})/S',
+            '?', $this->message);
+
+        //reject overly long 3 byte sequences and UTF-16 surrogates and replace with ?
+        $this->message = preg_replace('/\xE0[\x80-\x9F][\x80-\xBF]'.
+            '|\xED[\xA0-\xBF][\x80-\xBF]/S','?', $this->message);
+
+        $dom = new DOMDocument();
+        $status = @$dom->loadXML($this->message);
+        if (!$status) {
+            return false;
+        }
+
+        $this->traversal($dom);
+
+        /*
+        $this->_parser = xml_parser_create('UTF-8');
         // Set XML parser to take the case of tags in to account
         xml_parser_set_option($this->_parser, XML_OPTION_CASE_FOLDING, false);
+        xml_parser_set_option($this->_parser, XML_OPTION_TARGET_ENCODING, "UTF-8");
         // Set XML parser callback functions
         xml_set_object($this->_parser, $this);
         xml_set_element_handler($this->_parser, 'tag_open', 'tag_close');
         xml_set_character_data_handler($this->_parser, 'cdata');
         if (!xml_parse($this->_parser, $this->message)) {
-            /* die(sprintf('XML error: %s at line %d',
+            throw new Exception(sprintf('XML error: %s at line %d',
                 xml_error_string(xml_get_error_code($this->_parser)),
-                xml_get_current_line_number($this->_parser))); */
-            return false;
+                xml_get_current_line_number($this->_parser)));
         }
         xml_parser_free($this->_parser);
         // Grab the error messages, if any
@@ -564,6 +608,7 @@ class IXR_Message {
             $this->faultCode = $this->params[0]['faultCode'];
             $this->faultString = $this->params[0]['faultString'];
         }
+        */
         return true;
     }
     function tag_open($parser, $tag, $attr) {
