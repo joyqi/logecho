@@ -247,7 +247,8 @@ class XMLRPC
         $response = http_send($this->url, $xml, 60, $this->useragent);
 
         if (!$response || 200 != $response['status']) {
-            $this->error = new IXR_Error(-32700, 'parse error. not well formed');
+            $this->error = new IXR_Error(-32700, 'network error. response with status: '
+                . (isset($response['status']) ? $response['status'] : '0'));
             return false;
         }
 
