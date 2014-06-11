@@ -84,8 +84,8 @@ class Watch
 
             if ($md5 != $old) {
                 info('[' . date('c') . '] Files changed');
-                $callback();
                 file_put_contents($this->_temp, $md5);
+                $callback();
             }
 
             sleep(1);
