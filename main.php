@@ -112,24 +112,32 @@ switch ($argv[0]) {
         info('Finished init ' . $dir);
 
         break;
+    case 'watch':
+        $watch = new \LE\Watch($dir);
+        $watch->watch(function () use ($dir) {
+            build($dir);
+        });
+        break;
     case 'serve':
-        $script = str_replace(['{document-root}', '{build-command}'],
-            [$dir, $_SERVER['PHP_SELF'] . ' build ' . $dir], file_get_contents('phar://logecho.phar/server.php'));
-        $temp = tempnam(sys_get_temp_dir(), 'ls-');
-        file_put_contents($temp, $script);
+        $proc = proc_open($_SERVER['PHP_SELF'] . ' watch ' . $dir, [
+            0   =>  ['pipe', 'r'],
+            1   =>  ['pipe', 'w'],
+            2   =>  ['file', '/tmp/error.log', 'a']
+        ], $pipes, getcwd());
+        stream_set_blocking($pipes[0], 0);
+        stream_set_blocking($pipes[1], 0);
 
         $target = rtrim($dir, '/') . '/_target';
         info('Listening on localhost:7000');
         info('Document root is ' . $target);
         info('Press Ctrl-C to quit');
-        exec('/usr/bin/env php -S localhost:7000 -t ' . $target . ' ' . $temp);
-        unlink($temp);
+        exec('/usr/bin/env php -S localhost:7000 -t ' . $target);
         break;
     case 'help':
     default:
         echo 'LOGECHO ' . VERSION . '
 Copyright (c) 2013-' . date('Y') . ' Logecho (http://logecho.com)
-usage: logecho (init|build|sync|serve|help|update|import) [your-working-directory]
+usage: logecho (init|build|sync|serve|watch|help|update|import) [your-working-directory]
 ';
         break;
 }

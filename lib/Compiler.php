@@ -84,10 +84,10 @@ class Compiler
         $twig = $this->_template;
 
         if (file_exists($dir . '/functions.php')) {
-            require_once $dir . '/functions.php';
+            require $dir . '/functions.php';
         }
 
-        require_once 'phar://logecho.phar/functions.php';
+        require 'phar://logecho.phar/functions.php';
 
         $this->readConfig();
         $this->readMetas();
