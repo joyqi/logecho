@@ -388,8 +388,11 @@ class Compiler
 
         foreach ($result as &$archive) {
             usort($archive, function ($a, $b) {
-                $x = array_search($a['id'], $this->_index[$a['type']]);
-                $y = array_search($b['id'], $this->_index[$b['type']]);
+                list ($aType, $aId) = explode(':', $a['id']);
+                list ($bType, $bId) = explode(':', $b['id']);
+
+                $x = array_search($aId, $this->_index[$aType]);
+                $y = array_search($bId, $this->_index[$bType]);
 
                 return $x > $y ? 1 : -1;
             });

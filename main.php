@@ -113,13 +113,17 @@ switch ($argv[0]) {
 
         break;
     case 'serve':
-        build($dir);
+        $script = str_replace(['{document-root}', '{build-command}'],
+            [$dir, $_SERVER['PHP_SELF'] . ' build ' . $dir], file_get_contents('phar://logecho.phar/server.php'));
+        $temp = tempnam(sys_get_temp_dir(), 'ls-');
+        file_put_contents($temp, $script);
 
         $target = rtrim($dir, '/') . '/_target';
         info('Listening on localhost:7000');
         info('Document root is ' . $target);
         info('Press Ctrl-C to quit');
-        exec('/usr/bin/env php -S localhost:7000 -t ' . $target);
+        exec('/usr/bin/env php -S localhost:7000 -t ' . $target . ' ' . $temp);
+        unlink($temp);
         break;
     case 'help':
     default:
