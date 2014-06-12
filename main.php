@@ -115,7 +115,7 @@ switch ($argv[0]) {
     case 'watch':
         $watch = new \LE\Watch($dir);
         $watch->watch(function () use ($dir) {
-            build($dir);
+            exec($_SERVER['PHP_SELF'] . ' build ' . $dir);
         });
         break;
     case 'serve':
