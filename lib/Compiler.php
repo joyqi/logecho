@@ -613,10 +613,10 @@ class Compiler
             'url'           =>  isset($this->_data['url']) ? $this->_data['url'] : '/'
         ], $config);
 
-        $feedsUrl = rtrim($config['base'], '/') . '/' . ltrim($config['target'], '/');
+        $feedsUrl = rtrim($config['url'], '/') . '/' . ltrim($config['target'], '/');
 
         $feeds = new \Atom();
-        $feeds->setBaseUrl($config['base']);
+        $feeds->setBaseUrl($config['url']);
         $feeds->setFeedUrl($feedsUrl);
         $feeds->setTitle($config['title']);
         $feeds->setSubTitle($config['description']);
@@ -626,12 +626,12 @@ class Compiler
             $post = $this->getPost($config['source'], $post);
             $item = [
                 'title'     =>  $post['title'],
-                'link'      =>  rtrim($config['base'], '/') . $post['url'],
+                'link'      =>  rtrim($config['url'], '/') . $post['url'],
                 'updated'   =>  $post['date'],
                 'published' =>  $post['date'],
                 'author'    =>  isset($config['author']) ? [
                         'name'  =>  $config['author'],
-                        'url'   =>  $config['base']
+                        'url'   =>  $config['url']
                         ] : NULL,
                 'content'   =>  $post['content']
             ];
