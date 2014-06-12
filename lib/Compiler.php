@@ -61,6 +61,11 @@ class Compiler
     private $_cached = [];
 
     /**
+     * @var array
+     */
+    private $_sitemap = [];
+
+    /**
      * construct with config file
      *
      * @param $dir
@@ -402,6 +407,15 @@ class Compiler
     }
 
     /**
+     * @param $url
+     * @param $priority
+     */
+    private function addSitemap($url, $priority)
+    {
+        $this->_sitemap[$url] = $priority;
+    }
+
+    /**
      * @param $template
      * @param $file
      * @param array $data
@@ -455,6 +469,9 @@ class Compiler
             $post = array_merge($this->getPost($type, $key),
                 $this->getPostContext($type, $key));
             $currentTemplate = isset($post['template']) ? $post['template'] : $template;
+
+            // add sitemap
+            $this->addSitemap($post['url'], 0.64);
 
             $this->build($currentTemplate, $target . $post['slug'] . '.' . $post['ext'], [
                 $type   =>  $post
@@ -521,6 +538,9 @@ class Compiler
                 }
             }
 
+            // add sitemap
+            $this->addSitemap($target, 0.8);
+
             $this->build($template, $target, $data);
         }
     }
@@ -562,6 +582,9 @@ class Compiler
             }
         }
 
+        // add sitemap
+        $this->addSitemap('/index.html', 1);
+
         $this->build($template, $target, [
             'index'    =>  $index
         ]);
@@ -587,7 +610,7 @@ class Compiler
             'description'   =>  isset($this->_data['description']) ? $this->_data['description'] : 'My Feeds Description',
             'recent'        =>  20,
             'target'        =>  'feeds.xml',
-            'base'          =>  isset($this->_data['url']) ? $this->_data['url'] : '/'
+            'url'           =>  isset($this->_data['url']) ? $this->_data['url'] : '/'
         ], $config);
 
         $feedsUrl = rtrim($config['base'], '/') . '/' . ltrim($config['target'], '/');
@@ -645,6 +668,43 @@ class Compiler
     }
 
     /**
+     * generate sitemap.xml
+     */
+    private function generateSitemap()
+    {
+        $fp = fopen($this->_dir . '_target/sitemap.xml', 'wb');
+        if (!$fp) {
+            throw new \Exception('Can not generate sitemap.xml');
+        }
+
+        info('Generate sitemap');
+        $base = isset($this->_data['url']) ? rtrim($this->_data['url'], '/') : '/';
+
+        fwrite($fp, '<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">');
+
+        foreach ($this->_sitemap as $url => $priority) {
+            $priority = number_format($priority, 2, '.', '');
+            $url = $base . '/' . ltrim($url, '/');
+
+            fwrite($fp, "
+    <url>
+        <loc>{$url}</loc>
+        <changefreq>daily</changefreq>
+        <priority>$priority</priority>
+    </url>");
+        }
+
+        fwrite($fp, '
+</urlset>');
+        fclose($fp);
+    }
+
+    /**
      * compile all files
      */
     public function compile()
@@ -653,6 +713,7 @@ class Compiler
         $this->compileMetas();
         $this->compilePosts();
         $this->generateFeeds();
+        $this->generateSitemap();
 
         echo "\033[32;1mFinish compile all\033[37;0m\n";
     }
