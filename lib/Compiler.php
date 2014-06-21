@@ -297,6 +297,7 @@ class Compiler
         $block = $this->_config['blocks'][$type];
         $file = $this->_dir . $block['source'] . '/' . $key . '.md';
         $result = $this->getMetas($file, $text);
+        $base = !empty($this->_data['url']) ? rtrim($this->_data['url'], '/') : '';
 
         // expand metas
         foreach ($result as $name => &$metas) {
@@ -323,6 +324,7 @@ class Compiler
         }
         $result['url'] = '/' . trim($block['target'], '/')
             . '/' . urlencode($result['slug']) . '.' . $result['ext'];
+        $result['permalink'] = $base . $result['url'];
 
         $dom = new \DOMDocument();
         @$dom->loadHTML('<?xml encoding="UTF-8">' .
@@ -626,7 +628,7 @@ class Compiler
             $post = $this->getPost($config['source'], $post);
             $item = [
                 'title'     =>  $post['title'],
-                'link'      =>  rtrim($config['url'], '/') . $post['url'],
+                'link'      =>  $post['permalink'],
                 'updated'   =>  $post['date'],
                 'published' =>  $post['date'],
                 'author'    =>  isset($config['author']) ? [
