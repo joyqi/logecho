@@ -511,7 +511,7 @@ class Compiler
             if ('/' == substr($target, -1)) {
                 if (!empty($this->_data['metas'][$type])) {
                     foreach ($this->_data['metas'][$type] as $key => $meta) {
-                        $targets[$target . $key . '.html'][] = $type . ':' . $key;
+                        $targets[$target . $key . '.html:' . $template][] = $type . ':' . $key;
                     }
                 }
             } else {
