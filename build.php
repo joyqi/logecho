@@ -1,6 +1,6 @@
 <?php
 /**
- * build.php - logecho
+ * build.php - logecho-main
  * 
  * @author joyqi
  */
@@ -21,7 +21,7 @@ $phar->delete('build.php');
 $phar->setStub('#!/usr/bin/env php
 <?php
 Phar::mapPhar("logecho.phar");
-include "phar://logecho.phar/main.php";
+include "phar://logecho.phar/index.php";
 __HALT_COMPILER();
 ?>');
 $phar->stopBuffering();
