@@ -27,11 +27,9 @@ blocks:
 feeds:
     # Definition of feeds gererating
     source  : post
-    recent  : 20
+    limit   : 20
     target  : feeds.xml
     author  : Logecho
-build:
-    # The commands running after compile
-    - cp -f @THEME/style.css @TARGET/style.css
-sync:
-    # The commands running with sync operation
+
+sync: null
+

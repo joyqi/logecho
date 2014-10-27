@@ -92,26 +92,66 @@ add_workflow('read_config', function () use ($context) {
     $context->config = $config;
 });
 
-// run command
-add_workflow('run_command', function ($type) use ($context) {
-    $pwd = [
-        '@HOME'     =>  $context->dir,
-        '@TARGET'   =>  $context->dir . '/_target',
-        '@THEME'    =>  $context->dir . '/_theme'
-    ];
-
-    if (!isset($context->config[$type]) || !is_array($context->config[$type])) {
-        return;
+// sync directory
+add_workflow('sync', function ($source = null, $target = null) use ($context) {
+    if (empty($source)) {
+        $source = $context->dir . '_target';
     }
 
-    foreach ($context->config[$type] as $command) {
-        $command = str_replace(array_keys($pwd), array_values($pwd), $command);
-        console('info', $command);
-
-        passthru($command, $return);
-        if ($return) {
-            fatal('command interrupted');
+    if (empty($target)) {
+        if (empty($context->config['sync'])) {
+            fatal('you must specify a sync directory');
         }
+
+        $target = $context->config['sync'];
+    }
+
+    // delete all files in target
+    $files = get_all_files($target);
+    $dirs = [];
+
+    foreach ($files as $file => $path) {
+        $dir = dirname($path);
+
+        // do not remove root directory
+        if (!in_array($dir, $dirs) && realpath($dir) != realpath($target)) {
+            $dirs[] = $dir;
+        }
+
+        // remove all files first
+        if (!unlink($path)) {
+            fatal('can not unlink file %s, permission denied', $path);
+        }
+    }
+
+    // remove all dirs
+    $dirs = array_reverse($dirs);
+    foreach ($dirs as $dir) {
+        if (!rmdir($dir)) {
+            fatal('can not rm directory %s, permission denied', $dir);
+        }
+    }
+
+    // copy all files
+    $files = get_all_files($source);
+    $offset = strlen($source);
+
+    foreach ($files as $file => $path) {
+        if ($file[0] == '.') {
+            continue;
+        }
+
+        $original = substr($path, $offset);
+        $current = $target . '/' . $original;
+        $dir = dirname($current);
+
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 0755, true)) {
+                fatal('can not make directory %s, permission denied', $dir);
+            }
+        }
+
+        copy($path, $current);
     }
 });
 
@@ -119,7 +159,7 @@ add_workflow('run_command', function ($type) use ($context) {
 add_workflow('build', function () use ($context) {
     do_workflow('compile.init');
     do_workflow('compile.compile');
-    do_workflow('run_command', 'build');
+    do_workflow('sync', $context->dir . '_public', $context->dir . '_target/public');
 });
 
 // init
@@ -135,14 +175,9 @@ add_workflow('init', function () use ($context) {
     $dir = __DIR__ . '/../sample';
     $offset = strlen($dir);
 
-    $files = $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,
-                FilesystemIterator::KEY_AS_PATHNAME
-                | FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::SKIP_DOTS));
+    $files = get_all_files($dir);
 
-    foreach ($files as $file) {
-        $path = $file->getPathname();
-        $file = $file->getFilename();
-
+    foreach ($files as $file => $path) {
         if ($file[0] == '.') {
             continue;
         }
@@ -152,20 +187,16 @@ add_workflow('init', function () use ($context) {
         $dir = dirname($target);
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            if (!mkdir($dir, 0755, true)) {
+                fatal('can not make directory %s, permission denied', $dir);
+            }
         }
 
         copy($path, $target);
     }
 });
 
-// sync
-add_workflow('sync', function () {
-    do_workflow('run_command', 'sync');
-});
-
-
-// sync
+// serve
 add_workflow('serve', function () use ($context) {
     $cmd = __DEBUG__ ? $_SERVER['_'] . ' ' . $_SERVER['PHP_SELF'] : $_SERVER['PHP_SELF'];
 
@@ -191,7 +222,7 @@ add_workflow('watch', function () use ($context) {
 
     while (true) {
         // get sources
-        $sources = [];
+        $sources = ["\/_theme\/", "\/_public\/"];
         $sum = '';
 
         foreach ($context->config['blocks'] as $type => $block) {
@@ -206,18 +237,12 @@ add_workflow('watch', function () use ($context) {
         }
 
         if (!empty($sources)) {
-            $sources[] = "\/_theme\/";
             $regex = "/^" . preg_quote(rtrim($context->dir, '/'))
                 . "(" . implode('|', $sources) . ")/";
 
-            $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($context->dir,
-                FilesystemIterator::KEY_AS_PATHNAME
-                | FilesystemIterator::CURRENT_AS_FILEINFO | FilesystemIterator::SKIP_DOTS));
+            $files = get_all_files($context->dir);
 
-            foreach ($files as $file) {
-                $path = $file->getPathname();
-                $file = $file->getFilename();
-
+            foreach ($files as $file => $path) {
                 if (!preg_match($regex, $path) || $file[0] == '.') {
                     continue;
                 }

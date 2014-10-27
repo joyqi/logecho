@@ -72,6 +72,18 @@ function get_current_namespace() {
 }
 
 /**
+ * get a dir recursive iterator  
+ * 
+ * @param string $dir 
+ * @return RecursiveIteratorIterator
+ */
+function get_all_files($dir) {
+    return new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,
+        FilesystemIterator::KEY_AS_FILENAME
+        | FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS));
+}
+
+/**
  * add workflow  
  * 
  * @param string $name 

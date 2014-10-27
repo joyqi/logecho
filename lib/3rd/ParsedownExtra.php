@@ -57,7 +57,7 @@ class Parsedown
     # Setters
     #
 
-    private $breaksEnabled;
+    private $breaksEnabled = true;
 
     function setBreaksEnabled($breaksEnabled)
     {
