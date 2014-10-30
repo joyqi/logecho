@@ -78,7 +78,7 @@ function get_current_namespace() {
  * @return RecursiveIteratorIterator
  */
 function get_all_files($dir) {
-    return new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,
+    return !is_dir($dir) ? [] : new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,
         FilesystemIterator::KEY_AS_FILENAME
         | FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS));
 }
