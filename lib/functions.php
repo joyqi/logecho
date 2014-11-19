@@ -12,7 +12,7 @@ spl_autoload_register(function ($class) {
 
 // handle exception
 set_exception_handler(function (Exception $e) {
-    console('error', $e->getMessage());
+    console('error', ((string) $e));
     exit(1);
 });
 
@@ -78,9 +78,20 @@ function get_current_namespace() {
  * @return RecursiveIteratorIterator
  */
 function get_all_files($dir) {
-    return !is_dir($dir) ? [] : new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir,
+    return !is_dir($dir) ? [] : new RecursiveIteratorIterator(new IgnorantRecursiveDirectoryIterator($dir,
         FilesystemIterator::KEY_AS_FILENAME
         | FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS));
+}
+
+class IgnorantRecursiveDirectoryIterator extends RecursiveDirectoryIterator { 
+    function getChildren() { 
+        try { 
+            return new IgnorantRecursiveDirectoryIterator($this->getPathname(), FilesystemIterator::KEY_AS_FILENAME
+                | FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS); 
+        } catch(UnexpectedValueException $e) { 
+            return new RecursiveArrayIterator(array()); 
+        } 
+    } 
 }
 
 /**
