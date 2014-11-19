@@ -64,6 +64,7 @@ add_workflow('read_opt', function () use ($context) {
             }
 
             $context->dir = rtrim($dir, '/') . '/';
+            $context->cmd = __DEBUG__ ? $_SERVER['_'] . ' ' . $_SERVER['PHP_SELF'] : $_SERVER['PHP_SELF'];
 
             if ($name != 'init') {
                 do_workflow('read_config');
@@ -198,17 +199,19 @@ add_workflow('init', function () use ($context) {
 
 // serve
 add_workflow('serve', function () use ($context) {
-    $cmd = __DEBUG__ ? $_SERVER['_'] . ' ' . $_SERVER['PHP_SELF'] : $_SERVER['PHP_SELF'];
+    $target = $context->dir . '_target';
+    if (!is_dir($target)) {
+        console('info', 'building target files, please wait ...');
+        exec($context->cmd . ' build ' . $context->dir);
+    }
 
-    $proc = proc_open($cmd . ' watch ' . $context->dir, [
+    $proc = proc_open($context->cmd . ' watch ' . $context->dir, [
         0   =>  ['pipe', 'r'],
         1   =>  ['pipe', 'w'],
         2   =>  ['file', sys_get_temp_dir() . '/logecho-error.log', 'a']
     ], $pipes, getcwd());
     stream_set_blocking($pipes[0], 0);
     stream_set_blocking($pipes[1], 0);
-
-    $target = $context->dir . '_target';
 
     console('info', 'Listening on localhost:7000');
     console('info', 'Document root is %s', $target);
@@ -252,13 +255,7 @@ add_workflow('watch', function () use ($context) {
 
             $sum = md5($sum . md5_file($context->dir . 'config.yaml'));
             if ($lastSum != $sum) {
-                try {
-                    do_workflow('read_config');
-                    do_workflow('build');
-                } catch (Exception $e) {
-                    console('error', $e->getMessage());
-                }
-
+                exec($context->cmd . ' build ' . $context->dir);
                 $lastSum = $sum;
             }
         }

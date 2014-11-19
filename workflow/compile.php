@@ -201,7 +201,7 @@ add_workflow('parse', function ($text) use ($context) {
     static $handler;
 
     if (empty($handler)) {
-        $parser = isset($context->parser) ? $context->parser : 'parsedown';
+        $parser = isset($context->parser) ? $context->parser : 'markdown';
         $defaults = [
             'markdown' => 'MarkdownExtraExtended#defaultTransform',
             'parsedown' => 'ParsedownExtra#text'
