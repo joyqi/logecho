@@ -52,7 +52,7 @@ add_workflow('read_metas', function () use ($context) {
 
             foreach ($files as $file) {
                 list ($metas) = do_workflow('get_metas', $file);
-                $term = explode('.', basename($file))[0];
+                $term = pathinfo($file, PATHINFO_FILENAME);
 
                 $context->index[$type][$term] = $metas['date'];
 
@@ -267,7 +267,7 @@ add_workflow('get_post', function ($type, $key) use ($context) {
     $result['content'] = do_workflow('parse', $text);
     $result['ext'] = isset($block['ext']) ? $block['ext'] : 'html';
     if (!isset($result['slug'])) {
-        $result['slug'] = $key;
+        $result['slug'] = preg_match("/^[0-9]{4}\.(.+)$/", $key, $matches) ? $matches[1] : $key;
     }
     $result['url'] = '/' . trim($block['target'], '/')
         . '/' . urlencode($result['slug']) . '.' . $result['ext'];
@@ -380,7 +380,7 @@ add_workflow('compile_post', function ($type, $specific = NULL) use ($context) {
     foreach ($files as $file) {
         console('info', 'compile %s', preg_replace("/\/+/", '/', $file));
 
-        $key = explode('.', basename($file))[0];
+        $key = pathinfo($file, PATHINFO_FILENAME);
 
         if (!empty($specific) && $key != $specific) {
             continue;

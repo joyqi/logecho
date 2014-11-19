@@ -19,14 +19,15 @@ add_workflow('read_opt', function () use ($context) {
     global $argv;
 
     $opts = [
-        'init'  => 'init a blog directory using example config',
-        'build' => 'build contents to _target directory',
-        'sync'  => 'sync _target by using your sync config',
-        'serve' => 'start a http server to watch your site',
-        'watch' => '',
-        'help'  => 'help documents',
-        'update'=> 'update logecho to latest version',
-        'import'=> 'import data from other blogging platform which is using xmlrpc'
+        'init'      => 'init a blog directory using example config',
+        'build'     => 'build contents to _target directory',
+        'sync'      => 'sync _target by using your sync config',
+        'serve'     => 'start a http server to watch your site',
+        'watch'     => '',
+        'archive'   => '',
+        'help'      => 'help documents',
+        'update'    => 'update logecho to latest version',
+        'import'    => 'import data from other blogging platform which is using xmlrpc'
     ];
 
     if (count($argv) > 0 && $argv[0] == $_SERVER['PHP_SELF']) {
@@ -217,6 +218,52 @@ add_workflow('serve', function () use ($context) {
     console('info', 'Document root is %s', $target);
     console('info', 'Press Ctrl-C to quit');
     exec('/usr/bin/env php -S localhost:7000 -t ' . $target);
+});
+
+// archive
+add_workflow('archive', function () use ($context) {
+    // init complier
+    do_workflow('compile.init');
+    
+    foreach ($context->config['blocks'] as $type => $block) {
+        if (!isset($block['source']) || !is_string($block['source'])) {
+            continue;
+        }
+
+        $source = trim($block['source'], '/');
+        $files = glob($context->dir . '/' . $source . '/*.md');
+        $list = [];
+
+        foreach ($files as $file) {
+            list ($metas) = do_workflow('compile.get_metas', $file);
+            $date = $metas['date'];
+            
+            $list[$file] = $date;
+        }
+
+        asort($list);
+        $index = 1;
+
+        foreach ($list as $file => $date) {
+            $info = pathinfo($file);
+            $fileName = $info['filename'];
+            $dir = $info['dirname'];
+
+            if (preg_match("/^[0-9]{4}\.(.+)$/", $fileName, $matches)) {
+                $fileName = $matches[1];
+            }
+
+            $source = realpath($file);
+            $target = rtrim($dir, '/') . '/' . str_pad($index, 4, '0', STR_PAD_LEFT) . '.' . $fileName . '.md';
+
+            if ($source != $target && !file_exists($target)) {
+                console('info', basename($source) . ' => ' . basename($target));
+                rename($source, $target);
+            }
+
+            $index ++;
+        }
+    }
 });
 
 // watch
