@@ -1,6 +1,7 @@
 {
     "name": "joyqi/logecho",
     "description": "A simple static blog engine",
+    "type": "project",
     "license": "MIT",
     "authors": [
         {
