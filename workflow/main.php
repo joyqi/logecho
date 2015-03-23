@@ -110,7 +110,7 @@ le_add_workflow('sync', function ($source = null, $target = null) use ($context)
     $data = '';
     
     // compress all files
-    $files = get_all_files($source);
+    $files = le_get_all_files($source);
     $offset = strlen($source);
     $first = true;
 
@@ -157,7 +157,7 @@ le_add_workflow('build', function () use ($context) {
     $target = $context->dir . '_target/public';
 
     // delete all files in target
-    $files = get_all_files($target);
+    $files = le_get_all_files($target);
     $dirs = [];
 
     foreach ($files as $file => $path) {
@@ -183,7 +183,7 @@ le_add_workflow('build', function () use ($context) {
     }
 
     // copy all files
-    $files = get_all_files($source);
+    $files = le_get_all_files($source);
     $offset = strlen($source);
 
     foreach ($files as $file => $path) {
@@ -218,7 +218,7 @@ le_add_workflow('init', function () use ($context) {
     $dir = __DIR__ . '/../sample';
     $offset = strlen($dir);
 
-    $files = get_all_files($dir);
+    $files = le_get_all_files($dir);
 
     foreach ($files as $file => $path) {
         if ($file[0] == '.') {
@@ -331,7 +331,7 @@ le_add_workflow('watch', function () use ($context) {
             $regex = "/^" . preg_quote(rtrim($context->dir, '/'))
                 . "(" . implode('|', $sources) . ")/";
 
-            $files = get_all_files($context->dir);
+            $files = le_get_all_files($context->dir);
 
             foreach ($files as $file => $path) {
                 if (!preg_match($regex, $path) || $file[0] == '.') {
