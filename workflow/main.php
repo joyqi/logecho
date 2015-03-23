@@ -6,16 +6,16 @@
  */
 
 // run
-add_workflow('run', function () use ($context) {
+le_add_workflow('run', function () use ($context) {
     if (version_compare(PHP_VERSION, '5.4.0', '<')) {
-        fatal('php version must be greater than 5.4.0, you have %s', PHP_VERSION);
+        le_fatal('php version must be greater than 5.4.0, you have %s', PHP_VERSION);
     }
 
-    do_workflow('read_opt');
+    le_do_workflow('read_opt');
 });
 
 // read_opt
-add_workflow('read_opt', function () use ($context) {
+le_add_workflow('read_opt', function () use ($context) {
     global $argv;
 
     $opts = [
@@ -49,7 +49,7 @@ add_workflow('read_opt', function () use ($context) {
 
     $name = array_shift($argv);
     if (!isset($opts[$name])) {
-        console('error', 'can not handle %s command, please use the following commands', $name);
+        le_console('error', 'can not handle %s command, please use the following commands', $name);
         $help();
         exit(1);
     }
@@ -59,52 +59,52 @@ add_workflow('read_opt', function () use ($context) {
     } else {
         if ($name != 'update') {
             if (count($argv) < 1) {
-                fatal('a blog directory is required');
+                le_fatal('a blog directory is required');
             }
 
             list ($dir) = $argv;
             if (!is_dir($dir)) {
-                fatal('blog directory "%s" is not exists', $dir);
+                le_fatal('blog directory "%s" is not exists', $dir);
             }
 
             $context->dir = rtrim($dir, '/') . '/';
             $context->cmd = __DEBUG__ ? $_SERVER['_'] . ' ' . $_SERVER['PHP_SELF'] : $_SERVER['PHP_SELF'];
 
             if ($name != 'init') {
-                do_workflow('read_config');
+                le_do_workflow('read_config');
             }
         }
 
         array_unshift($argv, $name);
-        call_user_func_array('do_workflow', $argv);
+        call_user_func_array('le_do_workflow', $argv);
 
-        console('done', $name);
+        le_console('done', $name);
     }
 });
 
 // read config
-add_workflow('read_config', function () use ($context) {
+le_add_workflow('read_config', function () use ($context) {
     $file = $context->dir . 'config.yaml';
     if (!file_exists($file)) {
-        fatal('can not find config file "%s"', $file);
+        le_fatal('can not find config file "%s"', $file);
     }
 
     $config = Spyc::YAMLLoad($file);
     if (!$config) {
-        fatal('config file is not a valid yaml file');
+        le_fatal('config file is not a valid yaml file');
     }
 
     $context->config = $config;
 });
 
 // sync directory
-add_workflow('sync', function ($source = null, $target = null) use ($context) {
+le_add_workflow('sync', function ($source = null, $target = null) use ($context) {
     $url = $context->config['sync'];
     if (empty($url)) {
-        fatal('Missing sync url configure');
+        le_fatal('Missing sync url configure');
     }
     
-    do_workflow('build');
+    le_do_workflow('build');
     $source = $context->dir . '_target';
     $img = tempnam(sys_get_temp_dir(), 'le');
     $data = '';
@@ -139,19 +139,19 @@ add_workflow('sync', function ($source = null, $target = null) use ($context) {
 
     $response = curl_exec($ch);
     if (false === $response) {
-        fatal(curl_error($ch));
+        le_fatal(curl_error($ch));
     }
 
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if (200 != $code) {
-        fatal($code);
+        le_fatal($code);
     }
 });
 
 // build all
-add_workflow('build', function () use ($context) {
-    do_workflow('compile.init');
-    do_workflow('compile.compile');
+le_add_workflow('build', function () use ($context) {
+    le_do_workflow('compile.init');
+    le_do_workflow('compile.compile');
 
     $source = $context->dir . '_public';
     $target = $context->dir . '_target/public';
@@ -170,7 +170,7 @@ add_workflow('build', function () use ($context) {
 
         // remove all files first
         if (!unlink($path)) {
-            fatal('can not unlink file %s, permission denied', $path);
+            le_fatal('can not unlink file %s, permission denied', $path);
         }
     }
 
@@ -178,7 +178,7 @@ add_workflow('build', function () use ($context) {
     $dirs = array_reverse($dirs);
     foreach ($dirs as $dir) {
         if (!rmdir($dir)) {
-            fatal('can not rm directory %s, permission denied', $dir);
+            le_fatal('can not rm directory %s, permission denied', $dir);
         }
     }
 
@@ -197,7 +197,7 @@ add_workflow('build', function () use ($context) {
 
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0755, true)) {
-                fatal('can not make directory %s, permission denied', $dir);
+                le_fatal('can not make directory %s, permission denied', $dir);
             }
         }
 
@@ -206,7 +206,7 @@ add_workflow('build', function () use ($context) {
 });
 
 // init
-add_workflow('init', function () use ($context) {
+le_add_workflow('init', function () use ($context) {
     if (file_exists($context->dir . 'config.yaml')) {
         $confirm = readline('target dir is not empty, continue? (Y/n) ');
 
@@ -231,7 +231,7 @@ add_workflow('init', function () use ($context) {
 
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0755, true)) {
-                fatal('can not make directory %s, permission denied', $dir);
+                le_fatal('can not make directory %s, permission denied', $dir);
             }
         }
 
@@ -240,10 +240,10 @@ add_workflow('init', function () use ($context) {
 });
 
 // serve
-add_workflow('serve', function () use ($context) {
+le_add_workflow('serve', function () use ($context) {
     $target = $context->dir . '_target';
     if (!is_dir($target)) {
-        console('info', 'building target files, please wait ...');
+        le_console('info', 'building target files, please wait ...');
         exec($context->cmd . ' build ' . $context->dir);
     }
 
@@ -255,16 +255,16 @@ add_workflow('serve', function () use ($context) {
     stream_set_blocking($pipes[0], 0);
     stream_set_blocking($pipes[1], 0);
 
-    console('info', 'Listening on localhost:7000');
-    console('info', 'Document root is %s', $target);
-    console('info', 'Press Ctrl-C to quit');
+    le_console('info', 'Listening on localhost:7000');
+    le_console('info', 'Document root is %s', $target);
+    le_console('info', 'Press Ctrl-C to quit');
     exec('/usr/bin/env php -S localhost:7000 -t ' . $target);
 });
 
 // archive
-add_workflow('archive', function () use ($context) {
+le_add_workflow('archive', function () use ($context) {
     // init complier
-    do_workflow('compile.init');
+    le_do_workflow('compile.init');
     
     foreach ($context->config['blocks'] as $type => $block) {
         if (!isset($block['source']) || !is_string($block['source'])) {
@@ -276,7 +276,7 @@ add_workflow('archive', function () use ($context) {
         $list = [];
 
         foreach ($files as $file) {
-            list ($metas) = do_workflow('compile.get_metas', $file);
+            list ($metas) = le_do_workflow('compile.get_metas', $file);
             $date = $metas['date'];
             
             $list[$file] = $date;
@@ -298,7 +298,7 @@ add_workflow('archive', function () use ($context) {
             $target = rtrim($dir, '/') . '/' . str_pad($index, 4, '0', STR_PAD_LEFT) . '.' . $fileName . '.md';
 
             if ($source != $target && !file_exists($target)) {
-                console('info', basename($source) . ' => ' . basename($target));
+                le_console('info', basename($source) . ' => ' . basename($target));
                 rename($source, $target);
             }
 
@@ -308,7 +308,7 @@ add_workflow('archive', function () use ($context) {
 });
 
 // watch
-add_workflow('watch', function () use ($context) {
+le_add_workflow('watch', function () use ($context) {
     $lastSum = '';
 
     while (true) {
@@ -353,6 +353,6 @@ add_workflow('watch', function () use ($context) {
 });
 
 // import
-add_workflow('import', function () use ($context) {
-    do_workflow('import.init');
+le_add_workflow('import', function () use ($context) {
+    le_do_workflow('import.init');
 });

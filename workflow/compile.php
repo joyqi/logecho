@@ -1,7 +1,7 @@
 <?php
 
 // init blog compiler
-add_workflow('init', function () use ($context) {
+le_add_workflow('init', function () use ($context) {
 
     // init all variables
     $context->indexConfig = [];
@@ -22,15 +22,15 @@ add_workflow('init', function () use ($context) {
         'autoescape'    =>  false
     ]);
 
-    do_workflow('init_twig', $context->template);
+    le_do_workflow('init_twig', $context->template);
 
     // read config
-    do_workflow('read_metas');
-    do_workflow('read_globals');
+    le_do_workflow('read_metas');
+    le_do_workflow('read_globals');
 });
 
 // load extension
-add_workflow('init_twig', function (Twig_Environment $twig) use ($context) {
+le_add_workflow('init_twig', function (Twig_Environment $twig) use ($context) {
     $twig->addFilter(new Twig_SimpleFilter('more', function ($str, $limit = 0) {
         if ($limit > 0) {
             $str = strip_tags($str);
@@ -44,14 +44,14 @@ add_workflow('init_twig', function (Twig_Environment $twig) use ($context) {
 });
 
 // read metas
-add_workflow('read_metas', function () use ($context) {
+le_add_workflow('read_metas', function () use ($context) {
     // read metas from post
     foreach ($context->config['blocks'] as $type => $block) {
         if (isset($block['source']) && is_string($block['source'])) {
             $files = glob($context->dir . $block['source'] . '/*.md');
 
             foreach ($files as $file) {
-                list ($metas) = do_workflow('get_metas', $file);
+                list ($metas) = le_do_workflow('get_metas', $file);
                 $term = pathinfo($file, PATHINFO_FILENAME);
 
                 $context->index[$type][$term] = $metas['date'];
@@ -95,7 +95,7 @@ add_workflow('read_metas', function () use ($context) {
 });
 
 // read globals
-add_workflow('read_globals', function () use ($context) {
+le_add_workflow('read_globals', function () use ($context) {
     if (isset($context->config['globals'])) {
         $context->data = $context->config['globals'];
     }
@@ -139,7 +139,7 @@ add_workflow('read_globals', function () use ($context) {
 });
 
 // get metas
-add_workflow('get_metas', function ($file) use ($context) {
+le_add_workflow('get_metas', function ($file) use ($context) {
     $str = ltrim(file_get_contents($file));
     $metas = [];
 
@@ -197,7 +197,7 @@ add_workflow('get_metas', function ($file) use ($context) {
 });
 
 // parse
-add_workflow('parse', function ($text) use ($context) {
+le_add_workflow('parse', function ($text) use ($context) {
     static $handler;
 
     if (empty($handler)) {
@@ -223,14 +223,14 @@ add_workflow('parse', function ($text) use ($context) {
         }
 
         if (!class_exists($className)) {
-            fatal('can not find parser class "%s"', $className);
+            le_fatal('can not find parser class "%s"', $className);
         }
 
         $ref = new ReflectionClass($className);
         $methodRef = $ref->getMethod($method);
 
         if (empty($methodRef)) {
-            fatal('can not find method "%s:%s"', $className, $method);
+            le_fatal('can not find method "%s:%s"', $className, $method);
         }
 
         $handler = [$methodRef->isStatic() ? $className : $ref->newInstance(), $method];
@@ -240,10 +240,10 @@ add_workflow('parse', function ($text) use ($context) {
 });
 
 // get post
-add_workflow('get_post', function ($type, $key) use ($context) {
+le_add_workflow('get_post', function ($type, $key) use ($context) {
     $block = $context->config['blocks'][$type];
     $file = $context->dir . $block['source'] . '/' . $key . '.md';
-    list ($result, $text) = do_workflow('get_metas', $file);
+    list ($result, $text) = le_do_workflow('get_metas', $file);
     $base = !empty($context->data['url']) ? rtrim($context->data['url'], '/') : '';
 
     // expand metas
@@ -264,7 +264,7 @@ add_workflow('get_post', function ($type, $key) use ($context) {
     $result['id'] = $type . ':' . $key;
     $result['title'] = $key;
     $result['text'] = $text;
-    $result['content'] = do_workflow('parse', $text);
+    $result['content'] = le_do_workflow('parse', $text);
     $result['ext'] = isset($block['ext']) ? $block['ext'] : 'html';
     if (!isset($result['slug'])) {
         $result['slug'] = preg_match("/^[0-9]{4}\.(.+)$/", $key, $matches) ? $matches[1] : $key;
@@ -294,7 +294,7 @@ add_workflow('get_post', function ($type, $key) use ($context) {
 });
 
 // get post context
-add_workflow('get_post_context', function ($type, $key) use ($context) {
+le_add_workflow('get_post_context', function ($type, $key) use ($context) {
     $index = array_search($key, $context->index[$type]);
     $result = [
         'prev'  =>  NULL,
@@ -302,18 +302,18 @@ add_workflow('get_post_context', function ($type, $key) use ($context) {
     ];
 
     if ($index > 0) {
-        $result['prev'] = do_workflow('get_post', $type, $context->index[$type][$index - 1]);
+        $result['prev'] = le_do_workflow('get_post', $type, $context->index[$type][$index - 1]);
     }
 
     if ($index < (count($context->index[$type]) - 1)) {
-        $result['next'] = do_workflow('get_post', $type, $context->index[$type][$index + 1]);
+        $result['next'] = le_do_workflow('get_post', $type, $context->index[$type][$index + 1]);
     }
 
     return $result;
 });
 
 // get meta posts
-add_workflow('get_meta_posts', function ($type, $key) use ($context) {
+le_add_workflow('get_meta_posts', function ($type, $key) use ($context) {
     $result = [];
 
     if (isset($context->metas[$type][$key])) {
@@ -322,7 +322,7 @@ add_workflow('get_meta_posts', function ($type, $key) use ($context) {
 
             $index = $postType . ':' . $postKey;
             if (!isset($context->cached[$index])) {
-                $context->cached[$index] = do_workflow('get_post', $postType, $postKey);
+                $context->cached[$index] = le_do_workflow('get_post', $postType, $postKey);
                 unset($context->cached[$index]['content']);
             }
 
@@ -346,7 +346,7 @@ add_workflow('get_meta_posts', function ($type, $key) use ($context) {
 });
 
 // build
-add_workflow('build', function ($template, $file, $data = []) use ($context) {
+le_add_workflow('build', function ($template, $file, $data = []) use ($context) {
     $html = $context->template->render($template, $data);
 
     $file = $context->dir . '/_target/' . $file;
@@ -354,7 +354,7 @@ add_workflow('build', function ($template, $file, $data = []) use ($context) {
 
     if (!is_dir($dir)) {
         if (!mkdir($dir, 0755, true)) {
-            fatal('directory is not exists "%s"', $dir);
+            le_fatal('directory is not exists "%s"', $dir);
         }
     }
 
@@ -362,11 +362,11 @@ add_workflow('build', function ($template, $file, $data = []) use ($context) {
 });
 
 // compile post
-add_workflow('compile_post', function ($type, $specific = NULL) use ($context) {
+le_add_workflow('compile_post', function ($type, $specific = NULL) use ($context) {
     $block = $context->config['blocks'][$type];
 
     if (!isset($block['source']) || !is_string($block['source']) || empty($block['target'])) {
-        fatal('block is not exists "%s"', $type);
+        le_fatal('block is not exists "%s"', $type);
     }
 
     $files = glob($context->dir . $block['source'] . '/*.md');
@@ -378,7 +378,7 @@ add_workflow('compile_post', function ($type, $specific = NULL) use ($context) {
     }
 
     foreach ($files as $file) {
-        console('info', 'compile %s', preg_replace("/\/+/", '/', $file));
+        le_console('info', 'compile %s', preg_replace("/\/+/", '/', $file));
 
         $key = pathinfo($file, PATHINFO_FILENAME);
 
@@ -386,30 +386,30 @@ add_workflow('compile_post', function ($type, $specific = NULL) use ($context) {
             continue;
         }
 
-        $post = array_merge(do_workflow('get_post', $type, $key),
-            do_workflow('get_post_context', $type, $key));
+        $post = array_merge(le_do_workflow('get_post', $type, $key),
+            le_do_workflow('get_post_context', $type, $key));
         $currentTemplate = isset($post['template']) ? $post['template'] : $template;
 
         // add sitemap
         $context->sitemap[$post['url']] = 0.64;
 
-        do_workflow('build', $currentTemplate, $target . $post['slug'] . '.' . $post['ext'], [
+        le_do_workflow('build', $currentTemplate, $target . $post['slug'] . '.' . $post['ext'], [
             $type   =>  $post
         ]);
     }
 });
 
 // compile posts
-add_workflow('compile_posts', function () use ($context) {
+le_add_workflow('compile_posts', function () use ($context) {
     foreach ($context->config['blocks'] as $type => $val) {
         if (isset($val['source']) && is_string($val['source'])) {
-            do_workflow('compile_post', $type);
+            le_do_workflow('compile_post', $type);
         }
     }
 });
 
 // compile metas
-add_workflow('compile_metas', function () use ($context) {
+le_add_workflow('compile_metas', function () use ($context) {
     $targets = [];
 
     foreach ($context->config['blocks'] as $type => $val) {
@@ -442,11 +442,11 @@ add_workflow('compile_metas', function () use ($context) {
 
             if (isset($parts[1])) {
                 $data[$type] = array_merge($context->data['metas'][$type][$parts[1]],
-                    do_workflow('get_meta_posts', $type, $parts[1]));
+                    le_do_workflow('get_meta_posts', $type, $parts[1]));
             } else {
                 if (!empty($context->data['metas'][$type])) {
                     foreach ($context->data['metas'][$type] as $key => $val) {
-                        $data[$type][$key] = array_merge($val, do_workflow('get_meta_posts', $type, $key));
+                        $data[$type][$key] = array_merge($val, le_do_workflow('get_meta_posts', $type, $key));
                     }
                 }
             }
@@ -454,12 +454,12 @@ add_workflow('compile_metas', function () use ($context) {
 
         // add sitemap
         $context->sitemap[$target] = 0.8;
-        do_workflow('build', $template, $target, $data);
+        le_do_workflow('build', $template, $target, $data);
     }
 });
 
 // compile index
-add_workflow('compile_index', function () use ($context) {
+le_add_workflow('compile_index', function () use ($context) {
     $index = [];
 
     if (empty($context->indexConfig)) {
@@ -487,7 +487,7 @@ add_workflow('compile_index', function () use ($context) {
             $posts = array_slice($context->index[$type], 0, $currentLimit);
 
             foreach ($posts as $post) {
-                $index[$type][] = do_workflow('get_post', $type, $post);
+                $index[$type][] = le_do_workflow('get_post', $type, $post);
             }
         }
     }
@@ -495,13 +495,13 @@ add_workflow('compile_index', function () use ($context) {
     // add sitemap
     $context->sitemap['/index.html'] = 1;
 
-    do_workflow('build', $template, $target, [
+    le_do_workflow('build', $template, $target, [
         'index'    =>  $index
     ]);
 });
 
 // generate feeds
-add_workflow('generate_feeds', function () use ($context) {
+le_add_workflow('generate_feeds', function () use ($context) {
     if (!isset($context->config['feeds'])) {
         return;
     }
@@ -530,7 +530,7 @@ add_workflow('generate_feeds', function () use ($context) {
 
     $posts = array_slice($context->index[$config['source']], 0, $config['recent']);
     foreach ($posts as $post) {
-        $post = do_workflow('get_post', $config['source'], $post);
+        $post = le_do_workflow('get_post', $config['source'], $post);
         $item = [
             'title'     =>  $post['title'],
             'link'      =>  $post['permalink'],
@@ -566,7 +566,7 @@ add_workflow('generate_feeds', function () use ($context) {
 
     if (!is_dir($targetDir)) {
         if (!mkdir($targetDir, 0755, true)) {
-            fatal('feeds directory is not exists "%s"', $targetDir);
+            le_fatal('feeds directory is not exists "%s"', $targetDir);
         }
     }
 
@@ -574,10 +574,10 @@ add_workflow('generate_feeds', function () use ($context) {
 });
 
 // generate sitemap
-add_workflow('generate_sitemap', function () use ($context) {
+le_add_workflow('generate_sitemap', function () use ($context) {
     $fp = fopen($context->dir . '_target/sitemap.xml', 'wb');
     if (!$fp) {
-        fatal('can not write sitemap.xml');
+        le_fatal('can not write sitemap.xml');
     }
 
     $base = isset($context->data['url']) ? rtrim($context->data['url'], '/') : '/';
@@ -607,10 +607,10 @@ add_workflow('generate_sitemap', function () use ($context) {
 });
 
 // compile
-add_workflow('compile', function () use ($context) {
-    do_workflow('compile_index');
-    do_workflow('compile_metas');
-    do_workflow('compile_posts');
-    do_workflow('generate_feeds');
-    do_workflow('generate_sitemap');
+le_add_workflow('compile', function () use ($context) {
+    le_do_workflow('compile_index');
+    le_do_workflow('compile_metas');
+    le_do_workflow('compile_posts');
+    le_do_workflow('generate_feeds');
+    le_do_workflow('generate_sitemap');
 });

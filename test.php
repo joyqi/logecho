@@ -6,5 +6,5 @@
  */
 
 require_once 'vendor/autoload.php';
-do_workflow('main.run');
+le_do_workflow('main.run');
 

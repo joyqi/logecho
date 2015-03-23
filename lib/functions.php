@@ -7,7 +7,7 @@ if (!defined('__DEBUG__')) {
 
 // handle exception
 set_exception_handler(function (Exception $e) {
-    console('error', ((string) $e));
+    le_console('error', ((string) $e));
     exit(1);
 });
 
@@ -17,13 +17,17 @@ set_exception_handler(function (Exception $e) {
  * @param string $type 
  * @param string $str 
  */
-function console($type, $str) {
+function le_console($type, $str) {
     $colors = [
         'info'      =>  '33',
         'done'      =>  '32',
         'error'     =>  '31',
         'debug'     =>  '36'
     ];
+
+    if (!__DEBUG__ && $type == 'debug') {
+        return;
+    }
 
     $color = isset($colors[$type]) ? $colors[$type] : '37';
 
@@ -40,7 +44,7 @@ function console($type, $str) {
  * @param string $str
  * @throws Exception
  */
-function fatal($str) {
+function le_fatal($str) {
     $args = func_get_args();
     throw new Exception(call_user_func_array('sprintf', $args));
 }
@@ -55,7 +59,7 @@ $context = new stdClass();
  * 
  * @return string
  */
-function get_current_namespace() {
+function le_get_current_namespace() {
     static $file;
 
     $traces = debug_backtrace(!DEBUG_BACKTRACE_IGNORE_ARGS & !DEBUG_BACKTRACE_PROVIDE_OBJECT, 2);
@@ -72,16 +76,16 @@ function get_current_namespace() {
  * @param string $dir 
  * @return RecursiveIteratorIterator
  */
-function get_all_files($dir) {
-    return !is_dir($dir) ? [] : new RecursiveIteratorIterator(new IgnorantRecursiveDirectoryIterator($dir,
+function le_get_all_files($dir) {
+    return !is_dir($dir) ? [] : new RecursiveIteratorIterator(new LEIgnorantRecursiveDirectoryIterator($dir,
         FilesystemIterator::KEY_AS_FILENAME
         | FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS));
 }
 
-class IgnorantRecursiveDirectoryIterator extends RecursiveDirectoryIterator { 
+class LEIgnorantRecursiveDirectoryIterator extends RecursiveDirectoryIterator { 
     function getChildren() { 
         try { 
-            return new IgnorantRecursiveDirectoryIterator($this->getPathname(), FilesystemIterator::KEY_AS_FILENAME
+            return new LEIgnorantRecursiveDirectoryIterator($this->getPathname(), FilesystemIterator::KEY_AS_FILENAME
                 | FilesystemIterator::CURRENT_AS_PATHNAME | FilesystemIterator::SKIP_DOTS); 
         } catch(UnexpectedValueException $e) { 
             return new RecursiveArrayIterator(array()); 
@@ -95,10 +99,10 @@ class IgnorantRecursiveDirectoryIterator extends RecursiveDirectoryIterator {
  * @param string $name 
  * @param mixed $func 
  */
-function add_workflow($name, $func) {
+function le_add_workflow($name, $func) {
     global $workflow;
 
-    $ns = get_current_namespace();
+    $ns = le_get_current_namespace();
     $workflow[$ns . '.' . $name] = $func;
 }
 
@@ -106,7 +110,7 @@ function add_workflow($name, $func) {
  * @param $name
  * @return mixed
  */
-function do_workflow($name) {
+function le_do_workflow($name) {
     global $workflow, $context;
     
     $args = func_get_args();
@@ -116,14 +120,14 @@ function do_workflow($name) {
     if (2 == count($parts)) {
         list ($ns) = $parts;
     } else {
-        $ns = get_current_namespace();
+        $ns = le_get_current_namespace();
         $name = $ns . '.' . $name;
     }
 
     require_once __DIR__ . '/../workflow/' . $ns . '.php';
 
     if (!isset($workflow[$name])) {
-        fatal('can not find workflow "%s"', $name);
+        le_fatal('can not find workflow "%s"', $name);
     }
 
     $desc = implode(', ', array_map(function ($arg) {
@@ -132,7 +136,7 @@ function do_workflow($name) {
             , 0, 10, '...', 'UTF-8') : '...';
     }, $args));
 
-    console('debug', '%s%s', $name, empty($desc) ? '' : ': ' . $desc);
+    le_console('debug', '%s%s', $name, empty($desc) ? '' : ': ' . $desc);
     return call_user_func_array($workflow[$name], $args);
 }
 

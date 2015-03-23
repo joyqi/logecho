@@ -1,5 +1,16 @@
 #!/usr/bin/env php
 <?php
-define('__DEBUG__', false);
-require __DIR__ . '/../index.php';
+
+foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php') as $file) {
+    if (file_exists($file)) {
+        define('LOGECHO_COMPOSER_FILE', $file);
+        break;
+    }
+}
+
+if (defined('LOGECHO_COMPOSER_FILE')) {
+    define('__DEBUG__', false);
+    require_once LOGECHO_COMPOSER_FILE;
+    le_do_workflow('main.run');
+}
 

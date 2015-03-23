@@ -5,22 +5,22 @@
  * @author joyqi
  */
 
-add_workflow('init', function () use ($context) {
-    list ($xmlrpc, $username, $password, $methods) = do_workflow('get_params');
-    do_workflow('import', $xmlrpc, $username, $password, $methods);
+le_add_workflow('init', function () use ($context) {
+    list ($xmlrpc, $username, $password, $methods) = le_do_workflow('get_params');
+    le_do_workflow('import', $xmlrpc, $username, $password, $methods);
 });
 
 // get params
-add_workflow('get_params', function () use ($context) {
+le_add_workflow('get_params', function () use ($context) {
     // detect url
     while (true) {
         $url = readline("Please enter your blog's xmlrpc url (http://...): ");
 
         try {
-            $url = do_workflow('detect_xmlrpc_url', $url);
+            $url = le_do_workflow('detect_xmlrpc_url', $url);
             break;
         } catch (Exception $e) {
-            console('error', $e->getMessage());
+            le_console('error', $e->getMessage());
             continue;
         }
     }
@@ -34,14 +34,14 @@ add_workflow('get_params', function () use ($context) {
         $password = readline('Password: ');
 
         if (!in_array('metaWeblog.getRecentPosts', $methods)) {
-            fatal('method "%" not found on your server', 'metaWeblog.getRecentPosts');
+            le_fatal('method "%" not found on your server', 'metaWeblog.getRecentPosts');
         }
 
         try {
             $xmlrpc->query('metaWeblog.getRecentPosts', 1, $username, $password, 1);
             break;
         } catch (Exception $e) {
-            console('error', $e->getMessage());
+            le_console('error', $e->getMessage());
             continue;
         }
     }
@@ -50,7 +50,7 @@ add_workflow('get_params', function () use ($context) {
 });
 
 // detect xmlrpc
-add_workflow('detect_xmlrpc_url', function ($url) {
+le_add_workflow('detect_xmlrpc_url', function ($url) {
     $ch = curl_init();
 
     curl_setopt_array($ch, [
@@ -70,7 +70,7 @@ add_workflow('detect_xmlrpc_url', function ($url) {
     curl_close($ch);
 
     if (!$reponse || 200 != $status) {
-        fatal('http server is not available: %s', $url);
+        le_fatal('http server is not available: %s', $url);
     }
 
     if ('text/html' == $type) {
@@ -95,11 +95,11 @@ add_workflow('detect_xmlrpc_url', function ($url) {
         return $url;
     }
 
-    fatal('no xmlrpc provider founded');
+    le_fatal('no xmlrpc provider founded');
 });
 
 // import
-add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($context) {
+le_add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($context) {
     $wxrFile = tempnam(sys_get_temp_dir(), 'le');
     $wxr = fopen($wxrFile, 'wb');
 
@@ -115,10 +115,10 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
 
     $blogId = 1;
     if (in_array('metaWeblog.getUsersBlogs', $methods)) {
-        console('info', 'fetching blog info');
+        le_console('info', 'fetching blog info');
         $blogs = $xmlrpc->query('metaWeblog.getUsersBlogs', 1, $username, $password, 100);
         if (empty($blogs)) {
-            fatal('user has no available blog');
+            le_fatal('user has no available blog');
         }
 
         $blog = array_shift($blogs);
@@ -133,7 +133,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
 
     $context->config['blocks']['category']['source'] = [];
     if (in_array('metaWeblog.getCategories', $methods)) {
-        console('info', 'fetching categories');
+        le_console('info', 'fetching categories');
         $categories = $xmlrpc->query('metaWeblog.getCategories', $blogId, $username, $password);
         $context->config['blocks']['category']['source'] = [];
 
@@ -144,11 +144,11 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
     }
 
     if (!file_put_contents($context->dir . 'config.yaml', Spyc::YAMLDump($context->config, 4))) {
-        fatal('can not write to config file: %sconfig.yaml', $context->dir);
+        le_fatal('can not write to config file: %sconfig.yaml', $context->dir);
     }
 
     if (in_array('metaWeblog.getRecentPosts', $methods)) {
-        console('info', 'fetching posts');
+        le_console('info', 'fetching posts');
 
         $posts = $xmlrpc->query('metaWeblog.getRecentPosts', $blogId, $username, $password, 1000);
         $source = $context->dir . $context->config['blocks']['post']['source'];
@@ -158,7 +158,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
 
         if (!is_dir($source)) {
             if (!mkdir($source, 0755, true)) {
-                fatal('can not make post target directory: %s', $source);
+                le_fatal('can not make post target directory: %s', $source);
             }
         }
 
@@ -167,13 +167,13 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
                 continue;
             }
 
-            console('info', 'add %s', $post['wp_slug']);
-            $content = do_workflow('filter_post', $post, $context->config['blocks']['category']['source']);
+            le_console('info', 'add %s', $post['wp_slug']);
+            $content = le_do_workflow('filter_post', $post, $context->config['blocks']['category']['source']);
             file_put_contents($source . '/' . $post['wp_slug'] . '.md', $content);
 
             if (in_array('wp.getComments', $methods)) {
                 $offset = 0;
-                console('info', 'fetching comments: %s', $post['postid']);
+                le_console('info', 'fetching comments: %s', $post['postid']);
 
                 do {
                     $comments = $xmlrpc->query('wp.getComments', $blogId, $username, $password, [
@@ -217,13 +217,13 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
 </rss>');
     fclose($wxr);
     if (rename($wxrFile, $context->dir . '/wxr.xml')) {
-        console('done', 'your comments WXR XML file has exported to %swxr.xml', $context->dir);
+        le_console('done', 'your comments WXR XML file has exported to %swxr.xml', $context->dir);
     }
 
 });
 
 // filter post
-add_workflow('filter_post', function ($post, $categoriesConfig) {
+le_add_workflow('filter_post', function ($post, $categoriesConfig) {
     $text = (isset($post['description']) ? $post['description'] : '')
         . (isset($post['mt_text_more']) ? "\n\n<!--more-->\n\n" . $post['mt_text_more'] : '');
 
