@@ -20,14 +20,13 @@ add_workflow('read_opt', function () use ($context) {
 
     $opts = [
         'init'      => 'Create an empty Logecho directory',
-        'build'     => 'build contents to _target directory',
-        'sync'      => 'sync _target by using your sync config',
-        'serve'     => 'start a http server to watch your site',
+        'build'     => 'Build contents to _target directory',
+        'sync'      => 'Sync _target by using your sync config',
+        'serve'     => 'Start a http server to watch your site',
         'watch'     => '',
         'archive'   => '',
         'help'      => 'Show help documents',
-        'update'    => 'Check and update the latest Logecho version',
-        'import'    => 'import data from other blogging platform which is using xmlrpc'
+        'import'    => 'Import data from other blogging platform which is using xmlrpc'
     ];
 
     if (count($argv) > 0 && $argv[0] == $_SERVER['PHP_SELF']) {

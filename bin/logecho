@@ -1,4 +1,5 @@
 #!/usr/bin/env php
 <?php
+define('__DEBUG__', false);
 require __DIR__ . '/../index.php';
 

@@ -1,7 +1,9 @@
 <?php
 
 // detect debug
-define('__DEBUG__', $_SERVER['_'] != $_SERVER['PHP_SELF']);
+if (!defined('__DEBUG__')) {
+    define('__DEBUG__', true);
+}
 
 // handle exception
 set_exception_handler(function (Exception $e) {
