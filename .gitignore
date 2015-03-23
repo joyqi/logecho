@@ -26,3 +26,5 @@ config.rb
 config.codekit
 /logecho
 /sample/_target
+composer.lock
+/vendor/

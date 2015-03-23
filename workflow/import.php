@@ -27,8 +27,8 @@ add_workflow('get_params', function () use ($context) {
 
     // check username and password
     while (true) {
-        $xmlrpc = new XMLRPC($url);
-        $methods = $xmlrpc->system->listMethods();
+        $xmlrpc = new IXR_Client($url);
+        $methods = $xmlrpc->query('system.listMethods');
 
         $username = readline('Username: ');
         $password = readline('Password: ');
@@ -38,7 +38,7 @@ add_workflow('get_params', function () use ($context) {
         }
 
         try {
-            $xmlrpc->metaWeblog->getRecentPosts(1, $username, $password, 1);
+            $xmlrpc->query('metaWeblog.getRecentPosts', 1, $username, $password, 1);
             break;
         } catch (Exception $e) {
             console('error', $e->getMessage());
@@ -116,7 +116,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
     $blogId = 1;
     if (in_array('metaWeblog.getUsersBlogs', $methods)) {
         console('info', 'fetching blog info');
-        $blogs = $xmlrpc->metaWeblog->getUsersBlogs(1, $username, $password, 100);
+        $blogs = $xmlrpc->query('metaWeblog.getUsersBlogs', 1, $username, $password, 100);
         if (empty($blogs)) {
             fatal('user has no available blog');
         }
@@ -126,7 +126,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
     }
 
     if (in_array('wp.getOptions', $methods)) {
-        $options = $xmlrpc->wp->getOptions($blogId, $username, $password);
+        $options = $xmlrpc->query('wp.getOptions', $blogId, $username, $password);
         $context->config['globals']['url'] = $options['blog_url']['value'];
         $context->config['globals']['title'] = $options['blog_title']['value'];
     }
@@ -134,7 +134,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
     $context->config['blocks']['category']['source'] = [];
     if (in_array('metaWeblog.getCategories', $methods)) {
         console('info', 'fetching categories');
-        $categories = $xmlrpc->metaWeblog->getCategories($blogId, $username, $password);
+        $categories = $xmlrpc->query('metaWeblog.getCategories', $blogId, $username, $password);
         $context->config['blocks']['category']['source'] = [];
 
         foreach ($categories as $category) {
@@ -150,7 +150,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
     if (in_array('metaWeblog.getRecentPosts', $methods)) {
         console('info', 'fetching posts');
 
-        $posts = $xmlrpc->metaWeblog->getRecentPosts($blogId, $username, $password, 1000);
+        $posts = $xmlrpc->query('metaWeblog.getRecentPosts', $blogId, $username, $password, 1000);
         $source = $context->dir . $context->config['blocks']['post']['source'];
         $target = rtrim($context->config['globals']['url'], '/') . '/'
             . trim(isset($context->config['blocks']['post']['target']) ? $context->config['blocks']['post']['target'] : 'post', '/')
@@ -176,7 +176,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
                 console('info', 'fetching comments: %s', $post['postid']);
 
                 do {
-                    $comments = $xmlrpc->wp->getComments($blogId, $username, $password, [
+                    $comments = $xmlrpc->query('wp.getComments', $blogId, $username, $password, [
                         'post_id'   =>  $post['postid'],
                         'number'    =>  100,
                         'offset'    =>  $offset
@@ -240,7 +240,7 @@ add_workflow('filter_post', function ($post, $categoriesConfig) {
     }, $text);
     $text = preg_replace("/<a[^>]+(href=\"[^\"]+\")[^>]*>/is", "<a \\1>", $text);
     $text = preg_replace("/<img[^>]+(src=\"[^\"]+\")[^>]*\/?>/is", "<img \\1>", $text);
-    $parser = new ConverterExtra();
+    $parser = new \Markdownify\ConverterExtra();
 
     $content = "\n" . $post['title'] . "\n"
         . str_repeat('=', strlen($post['title'])) . "\n\n"

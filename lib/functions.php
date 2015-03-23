@@ -3,13 +3,6 @@
 // detect debug
 define('__DEBUG__', $_SERVER['_'] != $_SERVER['PHP_SELF']);
 
-// register autoloader
-spl_autoload_register(function ($class) {
-    $file = '/3rd/' . str_replace(array('_', '\\'), '/', $class) . '.php';
-
-    include_once __DIR__ . $file;
-});
-
 // handle exception
 set_exception_handler(function (Exception $e) {
     console('error', ((string) $e));

@@ -203,7 +203,7 @@ add_workflow('parse', function ($text) use ($context) {
     if (empty($handler)) {
         $parser = isset($context->parser) ? $context->parser : 'markdown';
         $defaults = [
-            'markdown' => 'MarkdownExtraExtended#defaultTransform',
+            'markdown' => '\Michelf\MarkdownExtra#defaultTransform',
             'parsedown' => 'ParsedownExtra#text'
         ];
 

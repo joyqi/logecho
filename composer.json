@@ -1,0 +1,24 @@
+{
+    "name": "joyqi/logecho",
+    "description": "A simple static blog engine",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Joyqi",
+            "email": "magike.net@gmail.com"
+        }
+    ],
+    "require": {
+        "pixel418/markdownify": "*",
+        "lsmonki/php-ixr": "*",
+        "michelf/php-markdown": "*",
+        "erusev/parsedown-extra": "*",
+        "mustangostang/spyc": "*",
+        "twig/twig": "*"
+    },
+    "autoload": {
+        "files": ["lib/functions.php"],
+        "classmap": ["lib/Atom.php"]
+    },
+    "bin": ["bin/logecho"]
+}

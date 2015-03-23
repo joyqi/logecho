@@ -5,6 +5,6 @@
  * @author joyqi
  */
 
-require_once __DIR__ . '/lib/functions.php';
-
+require_once 'vendor/autoload.php';
 do_workflow('main.run');
+
