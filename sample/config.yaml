@@ -31,5 +31,5 @@ feeds:
     target  : feeds.xml
     author  : Logecho
 
-sync: null
+sync: http://your-custom-key@example.com
 

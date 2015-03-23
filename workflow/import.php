@@ -143,7 +143,7 @@ add_workflow('import', function ($xmlrpc, $username, $password, $methods) use ($
         }
     }
 
-    if (!file_put_contents($context->dir . 'config.yaml', Spyc::YAMLDump($context->config))) {
+    if (!file_put_contents($context->dir . 'config.yaml', Spyc::YAMLDump($context->config, 4))) {
         fatal('can not write to config file: %sconfig.yaml', $context->dir);
     }
 

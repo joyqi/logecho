@@ -19,14 +19,14 @@ add_workflow('read_opt', function () use ($context) {
     global $argv;
 
     $opts = [
-        'init'      => 'init a blog directory using example config',
+        'init'      => 'Create an empty Logecho directory',
         'build'     => 'build contents to _target directory',
         'sync'      => 'sync _target by using your sync config',
         'serve'     => 'start a http server to watch your site',
         'watch'     => '',
         'archive'   => '',
-        'help'      => 'help documents',
-        'update'    => 'update logecho to latest version',
+        'help'      => 'Show help documents',
+        'update'    => 'Check and update the latest Logecho version',
         'import'    => 'import data from other blogging platform which is using xmlrpc'
     ];
 
@@ -39,8 +39,12 @@ add_workflow('read_opt', function () use ($context) {
     }
 
     $help = function () use ($opts) {
+        echo "usage: logecho <command> <path>\n\n";
+        echo "Here are the most commonly used logecho commands:\n";
+
         foreach ($opts as $name => $words) {
-            echo "{$name}\t{$words}\n";
+            $name = str_pad($name, 12, ' ', STR_PAD_RIGHT);
+            echo "  {$name}{$words}\n";
         }
     };
 
@@ -56,7 +60,7 @@ add_workflow('read_opt', function () use ($context) {
     } else {
         if ($name != 'update') {
             if (count($argv) < 1) {
-                fatal('a blog directory argument is required');
+                fatal('a blog directory is required');
             }
 
             list ($dir) = $argv;
@@ -96,17 +100,62 @@ add_workflow('read_config', function () use ($context) {
 
 // sync directory
 add_workflow('sync', function ($source = null, $target = null) use ($context) {
-    if (empty($source)) {
-        $source = $context->dir . '_target';
+    $url = $context->config['sync'];
+    if (empty($url)) {
+        fatal('Missing sync url configure');
     }
+    
+    do_workflow('build');
+    $source = $context->dir . '_target';
+    $img = tempnam(sys_get_temp_dir(), 'le');
+    $data = '';
+    
+    // compress all files
+    $files = get_all_files($source);
+    $offset = strlen($source);
+    $first = true;
 
-    if (empty($target)) {
-        if (empty($context->config['sync'])) {
-            fatal('you must specify a sync directory');
+    foreach ($files as $file => $path) {
+        if ($file[0] == '.') {
+            continue;
         }
 
-        $target = $context->config['sync'];
+        $original = substr($path, $offset);
+        $data .= ($first ? '' : "\n") . $original . ' ' . base64_encode(file_get_contents($path));
+        $first = false;
     }
+
+    $ch = curl_init();
+
+    curl_setopt_array($ch, [
+        CURLOPT_URL             =>  $url,
+        CURLOPT_RETURNTRANSFER  =>  true,
+        CURLOPT_HEADER          =>  false,
+        CURLOPT_SSL_VERIFYPEER  =>  false,
+        CURLOPT_SSL_VERIFYHOST  =>  false,
+        CURLOPT_TIMEOUT         =>  20,
+        CURLOPT_POST            =>  true,
+        CURLOPT_POSTFIELDS      =>  $data
+    ]);
+
+    $response = curl_exec($ch);
+    if (false === $response) {
+        fatal(curl_error($ch));
+    }
+
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if (200 != $code) {
+        fatal($code);
+    }
+});
+
+// build all
+add_workflow('build', function () use ($context) {
+    do_workflow('compile.init');
+    do_workflow('compile.compile');
+
+    $source = $context->dir . '_public';
+    $target = $context->dir . '_target/public';
 
     // delete all files in target
     $files = get_all_files($target);
@@ -155,13 +204,6 @@ add_workflow('sync', function ($source = null, $target = null) use ($context) {
 
         copy($path, $current);
     }
-});
-
-// build all
-add_workflow('build', function () use ($context) {
-    do_workflow('compile.init');
-    do_workflow('compile.compile');
-    do_workflow('sync', $context->dir . '_public', $context->dir . '_target/public');
 });
 
 // init
